@@ -7,10 +7,12 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='repla
 import os
 import json
 import hashlib
+import time
 import feedparser
 import requests
 from datetime import datetime, timezone
 
+# 精简 RSS 源或限制单源抓取数，防止触发 429 速率限制
 RSS_SOURCES = [
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
@@ -26,7 +28,6 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 终极严格清洗：剥离所有空白字符、换行符、引号，确保 Header 绝对合法
 raw_api_key = os.environ.get("LLM_API_KEY", "")
 API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
@@ -123,9 +124,9 @@ def call_universal_llm(prompt_text):
             content = result_json["choices"][0]["message"]["content"]
             return json.loads(content)
         else:
-            print(f"LLM API 状态码异常 ({response.status_code}): {response.text[:150]}")
+            print(f"LLM API 状态码异常 ({response.status_code}): {response.text[:150]}", file=sys.stderr)
     except Exception as e:
-        print(f"LLM 请求异常: {str(e)[:120]}")
+        print(f"LLM 请求异常: {str(e)[:120]}", file=sys.stderr)
     
     return {"is_valid_deal": False}
 
@@ -174,7 +175,8 @@ def main():
     for src in RSS_SOURCES:
         try:
             feed = feedparser.parse(src["url"])
-            for entry in feed.entries[:8]:
+            # 限制每个源只取前 3 条，避免瞬间触发 429 速率限制
+            for entry in feed.entries[:3]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
                 summary = clean_text(entry.get("summary", entry.get("description", "")))
@@ -199,6 +201,9 @@ def main():
                     active_deals.insert(0, parsed)
                     existing_ids.add(deal_id)
                     new_added_count += 1
+
+                # ⏳ 每次 AI 请求后强制休眠 2 秒，防止触发平台的每分钟频率上限 (429)
+                time.sleep(2)
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
