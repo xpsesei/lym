@@ -28,7 +28,7 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 终极安全过滤：强制剥离 API_KEY、BASE_URL 中所有非 ASCII 字符（如隐藏的 \u200b 零宽空格），防止 requests Header 编码崩溃
+# 获取并清洗环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "")
 API_KEY = "".join(c for c in raw_api_key if ord(c) < 128).strip().strip('"').strip("'")
 
@@ -46,7 +46,6 @@ if not MODEL:
 
 client_base_url = BASE_URL
 
-# 通知配置安全过滤
 TG_TOKEN = "".join(c for c in os.environ.get("TELEGRAM_BOT_TOKEN", "") if ord(c) < 128).strip()
 TG_CHAT_ID = "".join(c for c in os.environ.get("TELEGRAM_CHAT_ID", "") if ord(c) < 128).strip()
 FEISHU_URL = "".join(c for c in os.environ.get("FEISHU_WEBHOOK_URL", "") if ord(c) < 128).strip()
@@ -174,8 +173,8 @@ def send_push_notification(deal):
             pass
 
 def main():
-    if not API_KEY or API_KEY.startswith("***"):
-        print("【致命错误】LLM_API_KEY 无效！请检查 GitHub 仓库 Secrets 中是否填入了真实的 API Key。")
+    if not API_KEY or "***" in API_KEY:
+        print("【致命错误】LLM_API_KEY 无效！你可能在 GitHub Secrets 中误填了星号 '***'。请删除并重新填入真实的 API 密钥（例如 sk-...）。")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
