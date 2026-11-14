@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全部情报与分类导航 - 全球羊毛站</title>
+    <title>全部情报与分类大厅 - 全球羊毛站</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-    <!-- 顶部导航栏 -->
+    <!-- 🌐 顶部多页面通用导航栏 -->
     <header class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                <a href="index.html" class="text-xl font-bold text-blue-600 flex items-center gap-2">
                     🔥 全球羊毛与高价值情报站
-                </h1>
-                <p class="text-sm text-gray-500 mt-1">情报大厅：多维度分类导航与历史情报分页检索</p>
+                </a>
             </div>
-            <nav class="mt-4 sm:mt-0 space-x-4">
-                <a href="index.html" class="text-gray-600 hover:text-blue-600 text-sm font-medium">返回首页</a>
-                <a href="deals.html" class="text-blue-600 font-semibold text-sm">全部情报与分类</a>
+            <!-- 多页面独立导航链接 -->
+            <nav class="mt-3 md:mt-0 flex flex-wrap gap-2 text-xs font-semibold">
+                <a href="index.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">首页</a>
+                <a href="deals.html" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm">全部情报</a>
+                <a href="ai.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">🤖 AI优惠</a>
+                <a href="crypto.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">💎 Crypto</a>
+                <a href="vps.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">💻 VPS云服务</a>
+                <a href="bank.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">🏦 U卡与银行</a>
+                <a href="archive.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">📦 历史归档</a>
             </nav>
         </div>
     </header>
@@ -37,7 +42,6 @@
             </div>
             <!-- 分类按钮容器 -->
             <div id="category-nav" class="flex flex-wrap gap-2.5">
-                <!-- 动态生成的分类按钮会在这里展示 -->
                 <span class="text-xs text-gray-400 py-2">正在加载分类导航...</span>
             </div>
         </div>
@@ -49,7 +53,6 @@
 
         <!-- 动态卡片容器 -->
         <div id="deals-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- 加载状态 -->
             <div class="col-span-full text-center py-20 text-gray-400">
                 <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -60,9 +63,7 @@
         </div>
 
         <!-- 分页按钮栏 -->
-        <div id="pagination-nav" class="mt-12 flex justify-center items-center space-x-2">
-            <!-- 动态生成分页按钮 -->
-        </div>
+        <div id="pagination-nav" class="mt-12 flex justify-center items-center space-x-2"></div>
     </main>
 
     <!-- 页脚 -->
@@ -83,7 +84,6 @@
                 if (!response.ok) throw new Error('网络请求失败');
                 
                 allDeals = await response.json();
-
                 renderCategoryNav();
                 renderPage();
             } catch (e) {
@@ -97,10 +97,8 @@
             }
         }
 
-        // 渲染分类导航栏
         function renderCategoryNav() {
             const nav = document.getElementById('category-nav');
-            // 提取所有不重复的分类
             const categories = ['全部', ...new Set(allDeals.map(d => d.category).filter(Boolean))];
             
             document.getElementById('total-categories-count').innerText = `共 ${categories.length - 1} 个活跃分类`;
@@ -123,22 +121,18 @@
             }).join('');
         }
 
-        // 切换分类
         window.switchCategory = function(cat) {
             currentCategory = cat;
-            currentPage = 1; // 切换分类时自动重置回第 1 页
+            currentPage = 1; // 切换分类时重置到第一页
             renderCategoryNav();
             renderPage();
         }
 
-        // 渲染当前页面的卡片与分页
         function renderPage() {
-            // 1. 过滤当前分类
             const filtered = currentCategory === '全部' 
                 ? allDeals 
                 : allDeals.filter(d => d.category === currentCategory);
 
-            // 2. 分页计算
             const totalItems = filtered.length;
             const totalPages = Math.ceil(totalItems / pageSize) || 1;
             if (currentPage > totalPages) currentPage = totalPages;
@@ -146,13 +140,11 @@
             const start = (currentPage - 1) * pageSize;
             const pageData = filtered.slice(start, start + pageSize);
 
-            // 3. 更新提示信息
             document.getElementById('pagination-info').innerHTML = `
                 当前展示分类：<span class="text-blue-600 font-bold">${currentCategory}</span> 
                 （共检索到 <span class="text-gray-900 font-bold">${totalItems}</span> 条活动）
             `;
 
-            // 4. 渲染卡片列表
             const container = document.getElementById('deals-container');
             if (pageData.length === 0) {
                 container.innerHTML = `
@@ -188,11 +180,9 @@
                 </div>
             `).join('');
 
-            // 5. 渲染分页栏
             renderPagination(totalPages);
         }
 
-        // 渲染分页按钮
         function renderPagination(totalPages) {
             const nav = document.getElementById('pagination-nav');
             if (totalPages <= 1) {
@@ -223,11 +213,10 @@
             nav.innerHTML = html;
         }
 
-        // 翻页动作
         window.changePage = function(page) {
             currentPage = page;
             renderPage();
-            window.scrollTo({ top: 0, behavior: 'smooth' }); // 翻页平滑滚动回顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         document.addEventListener('DOMContentLoaded', initDealsPage);
