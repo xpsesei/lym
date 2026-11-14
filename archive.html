@@ -1,25 +1,37 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>已结束活动档案 - 全球优惠与金融服务情报雷达</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史归档情报 - 全球羊毛站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-  <div id="app-header"></div>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div><a href="index.html" class="text-xl font-bold text-blue-600">🔥 全球羊毛与高价值情报站</a></div>
+            <nav class="mt-3 md:mt-0 flex flex-wrap gap-2 text-xs font-semibold">
+                <a href="index.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50">首页</a>
+                <a href="deals.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50">全部情报</a>
+                <a href="ai.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50">🤖 AI优惠</a>
+                <a href="crypto.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50">💎 Crypto</a>
+                <a href="vps.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50">💻 VPS云服务</a>
+                <a href="bank.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50">🏦 U卡与银行</a>
+                <a href="archive.html" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white">📦 历史归档</a>
+            </nav>
+        </div>
+    </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6">
-    <div class="mb-6">
-      <h2 class="text-2xl font-bold text-white">📦 H. 已结束活动档案</h2>
-      <p class="text-sm text-slate-400 mt-1">系统自动归档的已过期、失效或结束的历史优惠活动记录</p>
-    </div>
-    <div id="deals-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-  </main>
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-900">📦 已过期/历史归档活动</h2>
+            <span id="page-count" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium">加载中...</span>
+        </div>
+        <div id="deals-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-20 text-gray-400">正在加载归档数据...</div>
+        </div>
+        <div id="pagination-nav" class="mt-12 flex justify-center items-center space-x-2"></div>
+    </main>
 
-  <script>
-    const PAGE_TYPE = 'archive';
-  </script>
-  <script src="./js/common.js"></script>
-</body>
-</html>
+    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-400">
+        <p>Global Deals Auto
