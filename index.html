@@ -1,25 +1,146 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今日最新优惠 - 全球优惠与金融服务情报雷达</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日最新优惠 - 全球优惠与金融服务情报</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-  <div id="app-header"></div>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-  <main class="max-w-7xl mx-auto px-4 py-6">
-    <div class="mb-6">
-      <h2 class="text-2xl font-bold text-white">🔥 A. 今日最新优惠</h2>
-      <p class="text-sm text-slate-400 mt-1">自动采集并由 AI 验证的今日最新全球优惠、免费资源与限时活动</p>
-    </div>
-    <div id="deals-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-  </main>
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                    🔥 全球羊毛与高价值情报站
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">24/7 自动监控 AI、Crypto、U卡、VPS 及海外金融优惠</p>
+            </div>
+            <div class="mt-4 sm:mt-0 text-xs text-gray-400" id="update-time">
+                数据实时同步自 GitHub 仓库
+            </div>
+        </div>
+    </header>
 
-  <script>
-    const PAGE_TYPE = 'index';
-  </script>
-  <script src="./js/common.js"></script>
+    <!-- 主要内容区域 -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        
+        <!-- 状态/提示条 -->
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-700">最新生效活动</h2>
+            <span class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium" id="deal-count">加载中...</span>
+        </div>
+
+        <!-- 动态优惠情报卡片容器 -->
+        <div id="deals-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 骨架屏加载状态 -->
+            <div class="col-span-full text-center py-16 text-gray-400">
+                <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                正在加载最新全球羊毛情报...
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-400">
+        <p>Global Deals Auto Collector &copy; 2026 | Powered by GitHub Actions & DeepSeek AI</p>
+    </footer>
+
+    <!-- 前端渲染逻辑 -->
+    <script>
+        async function fetchAndRenderDeals() {
+            const container = document.getElementById('deals-container');
+            const countTag = document.getElementById('deal-count');
+            
+            try {
+                // 使用相对路径请求后端生成的 JSON 文件
+                const response = await fetch('./data/active_deals.json?t=' + new Date().getTime());
+                if (!response.ok) {
+                    throw new Error(`HTTP 错误状态码: ${response.status}`);
+                }
+                
+                const deals = await response.json();
+                
+                if (!deals || deals.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+                            <p class="text-gray-500 font-medium">暂无进行中的优惠情报</p>
+                            <p class="text-xs text-gray-400 mt-1">后台脚本正在持续监控各大源，请稍后刷新。</p>
+                        </div>
+                    `;
+                    countTag.innerText = '共 0 条活动';
+                    return;
+                }
+
+                countTag.innerText = `共 ${deals.length} 条有效活动`;
+
+                // 遍历数据并渲染卡片
+                container.innerHTML = deals.map(deal => `
+                    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 p-5 flex flex-col justify-between">
+                        <div>
+                            <!-- 顶部标签：分类与门槛 -->
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md">
+                                    📂 ${deal.category || '综合'}
+                                </span>
+                                <span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-md">
+                                    🏷️ ${deal.threshold_tag || '限时活动'}
+                                </span>
+                            </div>
+
+                            <!-- 标题 -->
+                            <h3 class="font-bold text-base text-gray-900 mb-2 leading-snug">
+                                ${deal.title}
+                            </h3>
+
+                            <!-- 详细描述 -->
+                            <p class="text-sm text-gray-600 mb-4 line-clamp-3">
+                                ${deal.offer_detail || deal.value_desc || '暂无详细描述'}
+                            </p>
+                        </div>
+
+                        <div>
+                            <!-- 价值与截止日期 -->
+                            <div class="bg-gray-50 rounded-lg p-3 mb-4 text-xs space-y-1">
+                                <div class="text-green-600 font-bold flex items-center gap-1">
+                                    <span>💰 价值评估:</span> ${deal.value_desc || '未标注'}
+                                </div>
+                                <div class="text-gray-500 flex items-center gap-1">
+                                    <span>⏰ 截止日期:</span> ${deal.end_date || '长期有效 / 待核实'}
+                                </div>
+                            </div>
+
+                            <!-- 底部直达链接 -->
+                            <div class="pt-3 border-t border-gray-100 flex justify-between items-center">
+                                <span class="text-xs text-gray-400">来源: ${deal.source || '官方源'}</span>
+                                <a href="${deal.official_url}" target="_blank" rel="noopener noreferrer" 
+                                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                                    直达活动 →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error("加载优惠数据出错:", error);
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-red-100">
+                        <p class="text-red-500 font-medium">数据加载失败</p>
+                        <p class="text-xs text-gray-400 mt-1">无法读取 data/active_deals.json，请确认文件路径或稍后重试。</p>
+                    </div>
+                `;
+                countTag.innerText = '加载异常';
+            }
+        }
+
+        // 页面加载完成后触发
+        document.addEventListener('DOMContentLoaded', fetchAndRenderDeals);
+    </script>
 </body>
 </html>
