@@ -1,5 +1,3 @@
-requests
 feedparser
+requests
 beautifulsoup4
-openai
-pydantic
