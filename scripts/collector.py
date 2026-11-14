@@ -27,11 +27,14 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
+API_KEY = os.environ.get("LLM_API_KEY", "").strip()
+BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").strip()
+MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini").strip()
+
 client = OpenAI(
-    api_key=os.environ.get("LLM_API_KEY"),
-    base_url=os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
+    api_key=API_KEY,
+    base_url=BASE_URL if BASE_URL else "https://api.openai.com/v1"
 )
-MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 
 # 通知配置
 TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
@@ -80,7 +83,6 @@ def clean_text(text):
     if isinstance(text, bytes):
         text = text.decode('utf-8', errors='ignore')
     
-    # 核心修复：过滤掉所有零宽空格、控制字符及不可打印字符，只保留安全字符
     safe_chars = []
     for c in text:
         if c.isprintable() or c in ('\n', '\t'):
@@ -89,7 +91,6 @@ def clean_text(text):
             safe_chars.append(' ')
     text = "".join(safe_chars)
     
-    # 双重保险：显式移除常见零宽/隐形字符
     for char in ['\u200b', '\u200c', '\u200d', '\ufeff', '\u2060', '\u00ad', '\r', '\u200e', '\u200f']:
         text = text.replace(char, '')
         
@@ -150,10 +151,16 @@ def analyze_with_ai(entry, source_name):
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        print("AI 分析跳过异常条目")
+        # 打印出真实的异常信息（安全转码），让你知道是 Key 错、URL 错还是余额不足
+        err_str = str(e).encode('utf-8', errors='ignore').decode('utf-8', errors='ignore')
+        print(f"AI 调用失败原因: {err_str[:150]}")
         return {"is_valid_deal": False}
 
 def main():
+    if not API_KEY:
+        print("【致命错误】未检测到 LLM_API_KEY 环境变量！请前往 GitHub 仓库 Settings -> Secrets and variables -> Actions 中正确配置 Secrets。")
+        return
+
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
