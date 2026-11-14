@@ -12,7 +12,6 @@ import feedparser
 import requests
 from datetime import datetime, timezone
 
-# 🌐 全量监控所有 RSS 源
 RSS_SOURCES = [
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
@@ -28,14 +27,11 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 智能清洗环境变量
+# 🛡️ 智能清洗环境变量（支持任意合法的 API Key 格式，如 clk_ 或 sk-）
 raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
-if "sk-" in raw_api_key:
-    start_idx = raw_api_key.find("sk-")
-    raw_api_key = raw_api_key[start_idx:]
-    for sep in [' ', '\n', '\r', '\t', 'LLM_']:
-        if sep in raw_api_key:
-            raw_api_key = raw_api_key.split(sep)[0]
+for sep in [' ', '\n', '\r', '\t', 'LLM_']:
+    if sep in raw_api_key:
+        raw_api_key = raw_api_key.split(sep)[0]
 
 API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
@@ -50,12 +46,9 @@ if "https://" in raw_base_url:
 BASE_URL = "".join(c for c in raw_base_url if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'").rstrip('/')
 
 raw_model = os.environ.get("LLM_MODEL", "").strip()
-if "deepseek" in raw_model:
-    start_idx = raw_model.find("deepseek")
-    raw_model = raw_model[start_idx:]
-    for sep in [' ', '\n', '\r', '\t', 'LLM_']:
-        if sep in raw_model:
-            raw_model = raw_model.split(sep)[0]
+for sep in [' ', '\n', '\r', '\t', 'LLM_']:
+    if sep in raw_model:
+        raw_model = raw_model.split(sep)[0]
 
 MODEL = "".join(c for c in raw_model if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
@@ -173,19 +166,18 @@ def main():
     print(f"【调试信息】当前使用的 Model: {MODEL}")
     print(f"【调试信息】清洗后的 API_KEY 长度: {len(API_KEY)}, 预览: {masked_key}")
 
-    if not API_KEY or not API_KEY.startswith("sk-") or len(API_KEY) < 20:
-        print("❌ 【致命错误】API Key 格式不正确！请检查 GitHub Secrets 中的 LLM_API_KEY 是否以 sk- 开头。")
+    # 🔓 放宽校验：只要长度足够即可，不再强制要求 sk- 前缀
+    if not API_KEY or len(API_KEY) < 10:
+        print("❌ 【致命错误】API Key 无效或为空！请检查 GitHub Secrets 中的 LLM_API_KEY。")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # 📦 加载历史数据（确保历史采集的羊毛内容完整保留、永不丢失）
     active_deals = load_json(ACTIVE_FILE)
     archived_deals = load_json(ARCHIVE_FILE)
-    print(f"【历史数据】当前已积累有效活动: {len(active_deals)} 条, 已归档活动: {len(archived_deals)} 条")
+    print(f"【历史数据】当前已积累有效活动: {len(active_deals)} 条")
 
-    # 检查过期活动并归档
     still_active = []
     for deal in active_deals:
         end_date = deal.get("end_date", "")
@@ -196,7 +188,6 @@ def main():
             still_active.append(deal)
     active_deals = still_active
 
-    # 构建现有 ID 集合，防止重复抓取相同的活动
     existing_ids = {d["id"] for d in active_deals} | {d["id"] for d in archived_deals}
 
     new_added_count = 0
@@ -204,8 +195,6 @@ def main():
         try:
             print(f"正在抓取源: {src['name']} ...")
             feed = feedparser.parse(src["url"])
-            
-            # 🚀 全量放开：每个源抓取前 12 条最新内容（确保不漏掉有效信息）
             for entry in feed.entries[:12]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
@@ -216,7 +205,7 @@ def main():
                     
                 deal_id = generate_id(title, link)
                 if deal_id in existing_ids:
-                    continue # 已经存在的数据直接跳过，避免重复
+                    continue
 
                 prompt_content = f"来源: {src['name']}\n标题: {title}\n链接: {link}\n摘要: {summary[:1500]}"
                 parsed = call_universal_llm(prompt_content)
@@ -228,28 +217,19 @@ def main():
                     if not parsed.get("official_url"):
                         parsed["official_url"] = link
                     
-                    # ➕ 将新采集到的有效活动插入到列表最前方（实现新老内容完美累加）
                     active_deals.insert(0, parsed)
                     existing_ids.add(deal_id)
                     new_added_count += 1
-                    print(key := f"  -> 成功捕获新羊毛: {parsed.get('title')}")
+                    print(f"  -> 成功捕获新羊毛: {parsed.get('title')}")
 
-                # ⏳ 适当休眠，防止触发 DeepSeek 并发频率限制
                 time.sleep(1.0)
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
-    # 按创建日期和价值评分排序
     active_deals.sort(key=lambda x: (x.get("created_at") == today_date, x.get("value_score", 0)), reverse=True)
-    
-    # 💾 保存回 JSON 文件（旧内容 + 新内容完整持久化）
     save_json(ACTIVE_FILE, active_deals)
     save_json(ARCHIVE_FILE, archived_deals[:500])
-    
-    print(f"========================================")
-    print(f"采集完成！本次新增有效优惠: {new_added_count} 条")
-    print(f"当前总有效活动数: {len(active_deals)} 条")
-    print(f"========================================")
+    print(f"采集完成，本次新增有效优惠: {new_added_count} 条，总计有效活动: {len(active_deals)} 条")
 
 if __name__ == "__main__":
     main()
