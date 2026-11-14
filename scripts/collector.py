@@ -13,31 +13,51 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
-# 🌐 1. 全量监控所有高质量 RSS 源
+# 🌐 1. 全网海量 RSS 源（覆盖 VPS、云服务、Crypto、软件福利、综合折扣）
 RSS_SOURCES = [
+    # --- AI 与开发者技术 ---
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
-    {"name": "Binance Announcement", "url": "https://www.binance.com/en/support/announcement/rss", "default_cat": "Crypto"},
-    {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
     {"name": "GitHub Blog", "url": "https://github.blog/feed/", "default_cat": "VPS及云服务"},
+    {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
     {"name": "Product Hunt", "url": "https://www.producthunt.com/feed", "default_cat": "软件与数字服务"},
-    {"name": "Hacker News (Free/Deals)", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"},
+    
+    # --- VPS 与服务器特惠源 (海量增加) ---
+    {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
+    {"name": "WHT (Web Hosting Talk Deals)", "url": "https://www.webhostingtalk.com/syndication.php?limit=15&forma=rss", "default_cat": "VPS及云服务"},
+    {"name": "Vpsmm (VPS优惠)", "url": "https://www.vpsmm.com/feed", "default_cat": "VPS及云服务"},
+    {"name": "NodeSeek Latest", "url": "https://www.nodeseek.com/rss", "default_cat": "VPS及云服务"},
+
+    # --- Crypto 与空投源 ---
+    {"name": "Binance Announcement", "url": "https://www.binance.com/en/support/announcement/rss", "default_cat": "Crypto"},
+    {"name": "CoinDesk News", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/", "default_cat": "Crypto"},
+    {"name": "Decrypt Co", "url": "https://decrypt.co/feed", "default_cat": "Crypto"},
+
+    # --- 软件、限免与综合羊毛源 ---
     {"name": "Reddit Freebies", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
     {"name": "Reddit Deals", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"},
-    {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
-    {"name": "BetaList (New Startups)", "url": "https://betalist.com/feed", "default_cat": "软件与数字服务"},
-    {"name": "OzBargain (Tech/Global Deals)", "url": "https://www.ozbargain.com.au/feed", "default_cat": "其他优惠"}
+    {"name": "Reddit AppHookUp", "url": "https://www.reddit.com/r/AppHookUp/.rss", "default_cat": "软件与数字服务"},
+    {"name": "Reddit FreeGameFindings", "url": "https://www.reddit.com/r/freeGameFindings/.rss", "default_cat": "软件与数字服务"},
+    {"name": "BetaList (Startups)", "url": "https://betalist.com/feed", "default_cat": "软件与数字服务"},
+    {"name": "OzBargain (Global Tech Deals)", "url": "https://www.ozbargain.com.au/feed", "default_cat": "其他优惠"},
+    {"name": "Hacker News (Free/Deals)", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"}
 ]
 
-# 📱 2. 监控公开的 Telegram 频道（已成功加入 ahmivaults）
+# 📱 2. 海量高质量公开 Telegram 频道源（涵盖 VPS、空投、羊毛、数字资产）
 TG_CHANNELS = [
-    "ahmivaults"  # 对应 https://t.me/s/ahmivaults
+    "ahmivaults",        // 你指定的频道
+    "vps_deals",         // 全球 VPS 优惠推送
+    "freevps",           // 免费与特价云服务器
+    "airdropinspect",    // 热门空投监测
+    "CryptoAirdrops",    // 空投线报
+    "Ucard_news",        // U卡与虚拟卡资讯
+    "DealHunt"           // 全球数码与软件折扣
 ]
 
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 智能清洗环境变量（支持任意合法的 API Key 格式，如 clk_ 或 sk-）
+# 🛡️ 智能清洗环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
 for sep in [' ', '\n', '\r', '\t', 'LLM_']:
     if sep in raw_api_key:
@@ -149,7 +169,6 @@ def generate_id(title, url):
     raw = f"{title.strip().lower()}_{url.strip().lower()}"
     return hashlib.md5(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
 
-# 🔍 抓取公开 Telegram 频道网页内容的函数
 def fetch_telegram_channel_entries(channel_username):
     entries = []
     url = f"https://t.me/s/{channel_username}"
@@ -206,12 +225,12 @@ def main():
     existing_ids = {d["id"] for d in active_deals} | {d["id"] for d in archived_deals}
     new_added_count = 0
 
-    # 1. 采集所有 RSS 源
+    # 1. 采集所有海量 RSS 源
     for src in RSS_SOURCES:
         try:
             print(f"正在抓取 RSS 源: {src['name']} ...")
             feed = feedparser.parse(src["url"])
-            for entry in feed.entries[:12]:
+            for entry in feed.entries[:10]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
                 summary = clean_text(entry.get("summary", entry.get("description", "")))
@@ -235,11 +254,11 @@ def main():
                     existing_ids.add(deal_id)
                     new_added_count += 1
                     print(f"  -> 成功捕获新羊毛: {parsed.get('title')}")
-                time.sleep(1.0)
+                time.sleep(0.5)
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
-    # 2. 采集配置的 Telegram 频道 (ahmivaults)
+    # 2. 采集所有海量 Telegram 频道
     for ch in TG_CHANNELS:
         try:
             print(f"正在抓取 Telegram 公开频道: @{ch} ...")
@@ -269,7 +288,7 @@ def main():
                     existing_ids.add(deal_id)
                     new_added_count += 1
                     print(f"  -> 成功从 Telegram 捕获羊毛: {parsed.get('title')}")
-                time.sleep(1.0)
+                time.sleep(0.5)
         except Exception as e:
             print(f"抓取 Telegram 频道 @{ch} 失败: {str(e)[:100]}")
 
