@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全部情报与分类大厅 - 全球羊毛站</title>
+    <title>全球羊毛与高价值情报站 - 首页</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-    <!-- 🌐 顶部多页面通用导航栏 -->
+    <!-- 🌐 全站统一顶部导航与分类栏 -->
     <header class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
             <div>
@@ -16,210 +16,83 @@
                     🔥 全球羊毛与高价值情报站
                 </a>
             </div>
-            <!-- 多页面独立导航链接 -->
             <nav class="mt-3 md:mt-0 flex flex-wrap gap-2 text-xs font-semibold">
-                <a href="index.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">首页</a>
-                <a href="deals.html" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm">全部情报</a>
-                <a href="ai.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">🤖 AI优惠</a>
-                <a href="crypto.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">💎 Crypto</a>
-                <a href="vps.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">💻 VPS云服务</a>
-                <a href="bank.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">🏦 U卡与银行</a>
-                <a href="archive.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">📦 历史归档</a>
+                <a href="index.html" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm">首页</a>
+                <a href="deals.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600">全部情报</a>
+                <a href="ai.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600">🤖 AI优惠</a>
+                <a href="crypto.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600">💎 Crypto</a>
+                <a href="vps.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600">💻 VPS云服务</a>
+                <a href="bank.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600">🏦 U卡与银行</a>
+                <a href="archive.html" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600">📦 历史归档</a>
             </nav>
         </div>
     </header>
 
-    <!-- 主要内容区域 -->
+    <!-- 首页主要内容 -->
     <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
-        
-        <!-- 🏷️ 醒目的分类导航大板块 -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-                    <span>🏷️</span> 选择情报分类
-                </h2>
-                <span class="text-xs text-gray-400" id="total-categories-count">实时同步分类</span>
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">🚀 最新收录情报</h2>
+                <p class="text-xs text-gray-500 mt-0.5">这里仅展示最近更新的高价值精选活动</p>
             </div>
-            <!-- 分类按钮容器 -->
-            <div id="category-nav" class="flex flex-wrap gap-2.5">
-                <span class="text-xs text-gray-400 py-2">正在加载分类导航...</span>
-            </div>
+            <a href="deals.html" class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-semibold rounded-lg transition-colors">
+                查看全部情报大厅 →
+            </a>
         </div>
 
-        <!-- 当前分类状态与统计 -->
-        <div class="mb-4 flex justify-between items-center text-sm text-gray-500 px-1">
-            <span id="pagination-info" class="font-medium text-gray-700">正在加载活动数据...</span>
+        <div id="latest-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-16 text-gray-400">正在加载最新内容...</div>
         </div>
 
-        <!-- 动态卡片容器 -->
-        <div id="deals-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full text-center py-20 text-gray-400">
-                <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                正在加载全球情报数据...
-            </div>
+        <div class="mt-12 text-center">
+            <a href="deals.html" class="inline-block px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-all text-sm">
+                浏览全部历史情报与分类翻页 ➔
+            </a>
         </div>
-
-        <!-- 分页按钮栏 -->
-        <div id="pagination-nav" class="mt-12 flex justify-center items-center space-x-2"></div>
     </main>
 
-    <!-- 页脚 -->
     <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-400">
         <p>Global Deals Auto Collector &copy; 2026 | Powered by GitHub Actions & DeepSeek AI</p>
     </footer>
 
-    <!-- 逻辑脚本 -->
     <script>
-        let allDeals = [];
-        let currentCategory = '全部';
-        let currentPage = 1;
-        const pageSize = 9; // 每页显示 9 条卡片
-
-        async function initDealsPage() {
+        async function fetchLatestDeals() {
+            const container = document.getElementById('latest-container');
             try {
                 const response = await fetch('./data/active_deals.json?t=' + new Date().getTime());
-                if (!response.ok) throw new Error('网络请求失败');
-                
-                allDeals = await response.json();
-                renderCategoryNav();
-                renderPage();
-            } catch (e) {
-                console.error(e);
-                document.getElementById('deals-container').innerHTML = `
-                    <div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-red-100">
-                        <p class="text-red-500 font-medium">数据加载失败</p>
-                        <p class="text-xs text-gray-400 mt-1">无法读取 data/active_deals.json，请确认文件是否存在。</p>
-                    </div>
-                `;
-            }
-        }
-
-        function renderCategoryNav() {
-            const nav = document.getElementById('category-nav');
-            const categories = ['全部', ...new Set(allDeals.map(d => d.category).filter(Boolean))];
-            
-            document.getElementById('total-categories-count').innerText = `共 ${categories.length - 1} 个活跃分类`;
-
-            nav.innerHTML = categories.map(cat => {
-                const count = cat === '全部' ? allDeals.length : allDeals.filter(d => d.category === cat).length;
-                const isActive = cat === currentCategory;
-                
-                return `
-                    <button onclick="switchCategory('${cat}')" 
-                        class="cat-btn px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1.5 ${
-                            isActive 
-                                ? 'bg-blue-600 text-white shadow-blue-100 ring-2 ring-blue-600 ring-offset-2' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                        }">
-                        <span>${cat}</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] ${isActive ? 'bg-blue-700 text-white' : 'bg-white text-gray-500 border border-gray-200'}">${count}</span>
-                    </button>
-                `;
-            }).join('');
-        }
-
-        window.switchCategory = function(cat) {
-            currentCategory = cat;
-            currentPage = 1; // 切换分类时重置到第一页
-            renderCategoryNav();
-            renderPage();
-        }
-
-        function renderPage() {
-            const filtered = currentCategory === '全部' 
-                ? allDeals 
-                : allDeals.filter(d => d.category === currentCategory);
-
-            const totalItems = filtered.length;
-            const totalPages = Math.ceil(totalItems / pageSize) || 1;
-            if (currentPage > totalPages) currentPage = totalPages;
-
-            const start = (currentPage - 1) * pageSize;
-            const pageData = filtered.slice(start, start + pageSize);
-
-            document.getElementById('pagination-info').innerHTML = `
-                当前展示分类：<span class="text-blue-600 font-bold">${currentCategory}</span> 
-                （共检索到 <span class="text-gray-900 font-bold">${totalItems}</span> 条活动）
-            `;
-
-            const container = document.getElementById('deals-container');
-            if (pageData.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-20 bg-white rounded-xl shadow-sm border border-gray-100">
-                        <p class="text-gray-500 font-medium">该分类下暂无进行中的活动</p>
-                        <p class="text-xs text-gray-400 mt-1">您可以切换其他分类或查看“全部”</p>
-                    </div>
-                `;
-                document.getElementById('pagination-nav').innerHTML = '';
-                return;
-            }
-
-            container.innerHTML = pageData.map(deal => `
-                <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md">📂 ${deal.category || '综合'}</span>
-                            <span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-md">🏷️ ${deal.threshold_tag || '限时'}</span>
-                        </div>
-                        <h3 class="font-bold text-base text-gray-900 mb-2 leading-snug">${deal.title}</h3>
-                        <p class="text-sm text-gray-600 mb-4 line-clamp-3">${deal.offer_detail || deal.value_desc || '暂无描述'}</p>
-                    </div>
-                    <div>
-                        <div class="bg-gray-50 rounded-lg p-3 mb-4 text-xs space-y-1">
-                            <div class="text-green-600 font-bold">💰 价值: ${deal.value_desc || '未标注'}</div>
-                            <div class="text-gray-500">⏰ 截止: ${deal.end_date || '长期有效'}</div>
-                        </div>
-                        <div class="pt-3 border-t border-gray-100 flex justify-between items-center text-xs">
-                            <span class="text-gray-400">来源: ${deal.source || '官方'}</span>
-                            <a href="${deal.official_url}" target="_blank" class="px-3.5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors">直达 →</a>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            renderPagination(totalPages);
-        }
-
-        function renderPagination(totalPages) {
-            const nav = document.getElementById('pagination-nav');
-            if (totalPages <= 1) {
-                nav.innerHTML = '';
-                return;
-            }
-
-            let html = `
-                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="px-3.5 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs cursor-not-allowed"' : 'class="px-3.5 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-50 font-medium"'}>
-                    上一页
-                </button>
-            `;
-
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === currentPage) {
-                    html += `<span class="px-3.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm">${i}</span>`;
-                } else {
-                    html += `<button onclick="changePage(${i})" class="px-3.5 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-50 font-medium">${i}</button>`;
+                const deals = await response.json();
+                if (!deals || deals.length === 0) {
+                    container.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500">暂无活动</div>';
+                    return;
                 }
+                const latest = deals.slice(0, 6);
+                container.innerHTML = latest.map(deal => `
+                    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 p-5 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md">📂 ${deal.category || '综合'}</span>
+                                <span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-md">🏷️ ${deal.threshold_tag || '限时'}</span>
+                            </div>
+                            <h3 class="font-bold text-base text-gray-900 mb-2 leading-snug">${deal.title}</h3>
+                            <p class="text-sm text-gray-600 mb-4 line-clamp-3">${deal.offer_detail || deal.value_desc || '暂无描述'}</p>
+                        </div>
+                        <div>
+                            <div class="bg-gray-50 rounded-lg p-3 mb-4 text-xs space-y-1">
+                                <div class="text-green-600 font-bold">💰 价值: ${deal.value_desc || '未标注'}</div>
+                                <div class="text-gray-500">⏰ 截止: ${deal.end_date || '长期有效'}</div>
+                            </div>
+                            <div class="pt-3 border-t border-gray-100 flex justify-between items-center text-xs">
+                                <span class="text-gray-400">来源: ${deal.source || '官方'}</span>
+                                <a href="${deal.official_url}" target="_blank" class="px-3.5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm">直达 →</a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="col-span-full text-center py-16 text-red-500">数据加载失败</div>';
             }
-
-            html += `
-                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="px-3.5 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs cursor-not-allowed"' : 'class="px-3.5 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-50 font-medium"'}>
-                    下一页
-                </button>
-            `;
-
-            nav.innerHTML = html;
         }
-
-        window.changePage = function(page) {
-            currentPage = page;
-            renderPage();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        document.addEventListener('DOMContentLoaded', initDealsPage);
+        document.addEventListener('DOMContentLoaded', fetchLatestDeals);
     </script>
 </body>
 </html>
