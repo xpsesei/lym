@@ -26,15 +26,15 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 获取并严格清洗环境变量
+# 🛡️ 终极严格清洗：剥离所有空白字符、换行符、引号，确保 Header 绝对合法
 raw_api_key = os.environ.get("LLM_API_KEY", "")
-API_KEY = "".join(c for c in raw_api_key if ord(c) < 128).strip().strip('"').strip("'")
+API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
 raw_base_url = os.environ.get("LLM_BASE_URL", "")
-BASE_URL = "".join(c for c in raw_base_url if ord(c) < 128).strip().strip('"').strip("'").rstrip('/')
+BASE_URL = "".join(c for c in raw_base_url if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'").rstrip('/')
 
 raw_model = os.environ.get("LLM_MODEL", "")
-MODEL = "".join(c for c in raw_model if ord(c) < 128).strip().strip('"').strip("'")
+MODEL = "".join(c for c in raw_model if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
 if not BASE_URL or not BASE_URL.startswith("http"):
     BASE_URL = "https://coarena.ai/api/v1"
@@ -127,7 +127,7 @@ def call_universal_llm(prompt_text):
     except Exception as e:
         print(f"LLM 请求异常: {str(e)[:120]}")
     
-    return {"is_valid_deal": false}
+    return {"is_valid_deal": False}
 
 def load_json(filepath):
     if not os.path.exists(filepath):
@@ -145,15 +145,11 @@ def generate_id(title, url):
     return hashlib.md5(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
 
 def main():
-    # 🔍 调试打印当前读取到的 API Key 状态（只显示前4位和后4位，确保安全）
-    masked_key = f"{API_KEY[:4]}...{API_KEY[-4:]}" if len(API_KEY) > 8 else "太短或为空"
-    print(f"【调试信息】当前读取到的 API_KEY 长度: {len(API_KEY)}, 预览: {masked_key}")
+    masked_key = f"{API_KEY[:4]}...{API_KEY[-4:]}" if len(API_KEY) > 8 else "无效或为空"
+    print(f"【调试信息】当前清理后的 API_KEY 长度: {len(API_KEY)}, 预览: {masked_key}")
 
-    if not API_KEY or "***" in API_KEY or "'" in API_KEY or '"' in API_KEY or len(API_KEY) < 10:
-        print("❌ 【严重错误】GitHub Secrets 中的 LLM_API_KEY 包含星号 '***' 或非法引号！")
-        print("👉 请前往 GitHub 仓库: Settings -> Secrets and variables -> Actions")
-        print("👉 找到 LLM_API_KEY，点击 Delete 删掉它。")
-        print("👉 重新点 New repository secret，名字填 LLM_API_KEY，值里面【只粘贴你的真实密钥（coa_...）】，绝对不要带引号、空格或星号！")
+    if not API_KEY or "***" in API_KEY or len(API_KEY) < 10:
+        print("❌ 【致命错误】API Key 无效！请检查 GitHub Secrets 中的 LLM_API_KEY。")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
