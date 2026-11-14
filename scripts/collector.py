@@ -27,17 +27,39 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 严格独立提取环境变量，杜绝变量串号
-raw_api_key = os.environ.get("LLM_API_KEY", "")
+# 🛡️ 智能防错清洗：如果里面不幸混入了其他变量，强制只提取 sk- 开头的那段真实密钥
+raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
+if "sk-" in raw_api_key:
+    # 自动定位并截取 sk- 开头的部分
+    start_idx = raw_api_key.find("sk-")
+    raw_api_key = raw_api_key[start_idx:]
+    # 如果后面连着其他变量名（比如连了 LLM_BASE），以空格或换行切断
+    for sep in [' ', '\n', '\r', '\t', 'LLM_']:
+        if sep in raw_api_key:
+            raw_api_key = raw_api_key.split(sep)[0]
+
 API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
-raw_base_url = os.environ.get("LLM_BASE_URL", "")
+raw_base_url = os.environ.get("LLM_BASE_URL", "").strip()
+if "https://" in raw_base_url:
+    start_idx = raw_base_url.find("https://")
+    raw_base_url = raw_base_url[start_idx:]
+    for sep in [' ', '\n', '\r', '\t', 'LLM_']:
+        if sep in raw_base_url:
+            raw_base_url = raw_base_url.split(sep)[0]
+
 BASE_URL = "".join(c for c in raw_base_url if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'").rstrip('/')
 
-raw_model = os.environ.get("LLM_MODEL", "")
+raw_model = os.environ.get("LLM_MODEL", "").strip()
+if "deepseek" in raw_model:
+    start_idx = raw_model.find("deepseek")
+    raw_model = raw_model[start_idx:]
+    for sep in [' ', '\n', '\r', '\t', 'LLM_']:
+        if sep in raw_model:
+            raw_model = raw_model.split(sep)[0]
+
 MODEL = "".join(c for c in raw_model if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
-# 强制 DeepSeek 默认兜底
 if not BASE_URL or not BASE_URL.startswith("http"):
     BASE_URL = "https://api.deepseek.com/v1"
 
@@ -50,11 +72,11 @@ SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、空投与金融优惠的情报分析专家。
 请从原始内容中提取符合以下7大领域的真实活动：
 1. AI订阅优惠
-2. Crypto (空投、测试网、积分、交易所活动)
-3. U卡 (海外虚拟卡、实体卡、返现、开卡奖励)
-4. 海外银行 (开户奖励、存款优惠、推荐奖励)
-5. VPS及云服务 (免费服务器、云计算额度、域名)
-6. 软件与数字服务 (免费试用、终身会员、开发者福利)
+2. Crypto (空投, 测试网, 积分, 交易所活动)
+3. U卡 (海外虚拟卡, 实体卡, 返现, 开卡奖励)
+4. 海外银行 (开户奖励, 存款优惠, 推荐奖励)
+5. VPS及云服务 (免费服务器, 计算额度, 域名)
+6. 软件与数字服务 (免费试用, 终身会员, 开发者福利)
 7. 其他值得关注的全球优惠活动
 
 【严格质量红线】：
@@ -150,10 +172,10 @@ def main():
     masked_key = f"{API_KEY[:4]}...{API_KEY[-4:]}" if len(API_KEY) > 8 else "无效或为空"
     print(f"【调试信息】当前使用的 Base URL: {BASE_URL}")
     print(f"【调试信息】当前使用的 Model: {MODEL}")
-    print(f"【调试信息】当前清理后的 API_KEY 长度: {len(API_KEY)}, 预览: {masked_key}")
+    print(f"【调试信息】清洗后的 API_KEY 长度: {len(API_KEY)}, 预览: {masked_key}")
 
-    if not API_KEY or "***" in API_KEY or len(API_KEY) < 10:
-        print("❌ 【致命错误】API Key 无效！请检查 GitHub Secrets 中的 LLM_API_KEY。")
+    if not API_KEY or not API_KEY.startswith("sk-") or len(API_KEY) < 20:
+        print("❌ 【致命错误】API Key 格式不正确！请检查 GitHub Secrets 中的 LLM_API_KEY 是否以 sk- 开头。")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
