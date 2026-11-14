@@ -28,15 +28,15 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 获取并清洗环境变量
+# 获取环境变量并进行绝对安全的清洗
 raw_api_key = os.environ.get("LLM_API_KEY", "")
-API_KEY = "".join(c for c in raw_api_key if ord(c) < 128).strip().strip('"').strip("'")
+API_KEY = "".join(c for c in raw_api_key if ord(c) < 128).strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
 
 raw_base_url = os.environ.get("LLM_BASE_URL", "")
-BASE_URL = "".join(c for c in raw_base_url if ord(c) < 128).strip().strip('"').strip("'").rstrip('/')
+BASE_URL = "".join(c for c in raw_base_url if ord(c) < 128).strip().strip('"').strip("'").replace("\n", "").replace("\r", "").rstrip('/')
 
 raw_model = os.environ.get("LLM_MODEL", "")
-MODEL = "".join(c for c in raw_model if ord(c) < 128).strip().strip('"').strip("'")
+MODEL = "".join(c for c in raw_model if ord(c) < 128).strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
 
 if not BASE_URL or not BASE_URL.startswith("http"):
     BASE_URL = "https://api.openai.com/v1"
@@ -46,9 +46,9 @@ if not MODEL:
 
 client_base_url = BASE_URL
 
-TG_TOKEN = "".join(c for c in os.environ.get("TELEGRAM_BOT_TOKEN", "") if ord(c) < 128).strip()
-TG_CHAT_ID = "".join(c for c in os.environ.get("TELEGRAM_CHAT_ID", "") if ord(c) < 128).strip()
-FEISHU_URL = "".join(c for c in os.environ.get("FEISHU_WEBHOOK_URL", "") if ord(c) < 128).strip()
+TG_TOKEN = "".join(c for c in os.environ.get("TELEGRAM_BOT_TOKEN", "") if ord(c) < 128).strip().replace("\n", "").replace("\r", "")
+TG_CHAT_ID = "".join(c for c in os.environ.get("TELEGRAM_CHAT_ID", "") if ord(c) < 128).strip().replace("\n", "").replace("\r", "")
+FEISHU_URL = "".join(c for c in os.environ.get("FEISHU_WEBHOOK_URL", "") if ord(c) < 128).strip().replace("\n", "").replace("\r", "")
 
 SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、空投与金融优惠的情报分析专家。
@@ -173,8 +173,8 @@ def send_push_notification(deal):
             pass
 
 def main():
-    if not API_KEY or "***" in API_KEY:
-        print("【致命错误】LLM_API_KEY 无效！你可能在 GitHub Secrets 中误填了星号 '***'。请删除并重新填入真实的 API 密钥（例如 sk-...）。")
+    if not API_KEY or "***" in API_KEY or len(API_KEY) < 10:
+        print(f"【致命错误】LLM_API_KEY 无效或包含星号 ('{API_KEY}')！请前往 GitHub 仓库 Settings -> Secrets 中删除并重新正确添加真实的 API Key。")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
