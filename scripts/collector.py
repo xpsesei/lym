@@ -28,25 +28,24 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 获取环境变量
-API_KEY = os.environ.get("LLM_API_KEY", "").strip()
-BASE_URL = os.environ.get("LLM_BASE_URL", "").strip().rstrip('/')
-MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini").strip()
+# 🛡️ 获取环境变量，并强力清洗所有换行符、空格、引号，防止 Header 注入报错
+API_KEY = os.environ.get("LLM_API_KEY", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
+BASE_URL = os.environ.get("LLM_BASE_URL", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "").rstrip('/')
+MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
 
-# 🛡️ 智能容错：如果用户未配置 BASE_URL 或留空，自动使用官方默认地址
+# 智能容错：如果用户未配置 BASE_URL，自动使用官方默认地址
 if not BASE_URL or not BASE_URL.startswith("http"):
     BASE_URL = "https://api.openai.com/v1"
 
-# 如果未指定模型，自动赋予默认值
 if not MODEL:
     MODEL = "gpt-4o-mini"
 
 client_base_url = BASE_URL
 
-# 通知配置
-TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-TG_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
-FEISHU_URL = os.environ.get("FEISHU_WEBHOOK_URL", "").strip()
+# 通知配置（同样进行防错清洗）
+TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
+TG_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
+FEISHU_URL = os.environ.get("FEISHU_WEBHOOK_URL", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
 
 SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、空投与金融优惠的情报分析专家。
@@ -171,8 +170,8 @@ def send_push_notification(deal):
             pass
 
 def main():
-    if not API_KEY:
-        print("【致命错误】未检测到 LLM_API_KEY！请在 GitHub 仓库 Secrets 中正确配置。")
+    if not API_KEY or API_KEY.startswith("***"):
+        print("【致命错误】LLM_API_KEY 无效！请检查 GitHub 仓库 Secrets 中是否填入了真实的 API Key（而不是掩码或带空格）。")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
