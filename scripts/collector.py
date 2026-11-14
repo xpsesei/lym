@@ -1,14 +1,13 @@
 import sys
 import io
 
-# 强制标准输出和错误输出为 UTF-8，彻底解决 Linux 终端编码问题
+# 强制标准输出和错误输出为 UTF-8
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 import os
 import json
 import hashlib
-import re
 import feedparser
 import requests
 from datetime import datetime, timezone
@@ -79,14 +78,19 @@ def clean_text(text):
     if not text:
         return ""
     if isinstance(text, bytes):
-        try:
-            text = text.decode('utf-8', errors='ignore')
-        except:
-            text = text.decode('latin1', errors='ignore')
+        text = text.decode('utf-8', errors='ignore')
     
-    # 过滤掉所有零宽空格、BOM 及不可见控制字符
-    invisible_chars = ['\u200b', '\u200c', '\u200d', '\ufeff', '\u2060', '\u00ad', '\r']
-    for char in invisible_chars:
+    # 核心修复：过滤掉所有零宽空格、控制字符及不可打印字符，只保留安全字符
+    safe_chars = []
+    for c in text:
+        if c.isprintable() or c in ('\n', '\t'):
+            safe_chars.append(c)
+        else:
+            safe_chars.append(' ')
+    text = "".join(safe_chars)
+    
+    # 双重保险：显式移除常见零宽/隐形字符
+    for char in ['\u200b', '\u200c', '\u200d', '\ufeff', '\u2060', '\u00ad', '\r', '\u200e', '\u200f']:
         text = text.replace(char, '')
         
     return text.strip()
@@ -116,8 +120,8 @@ def send_push_notification(deal):
                 "text": msg,
                 "disable_web_page_preview": True
             }, timeout=10)
-        except Exception as e:
-            print("Telegram 推送异常")
+        except Exception:
+            pass
 
     if FEISHU_URL:
         try:
@@ -125,8 +129,8 @@ def send_push_notification(deal):
                 "msg_type": "text",
                 "content": {"text": msg}
             }, timeout=10)
-        except Exception as e:
-            print("飞书推送异常")
+        except Exception:
+            pass
 
 def analyze_with_ai(entry, source_name):
     title = clean_text(entry.get('title', ''))
@@ -146,12 +150,7 @@ def analyze_with_ai(entry, source_name):
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        # 绝对安全的异常处理，防止异常文本本身的字符触发 ASCII 编码崩溃
-        try:
-            err_str = str(e).encode('utf-8', errors='ignore').decode('utf-8', errors='ignore')
-        except:
-            err_str = "API请求失败"
-        print(f"AI 分析跳过异常条目: {err_str[:80]}")
+        print("AI 分析跳过异常条目")
         return {"is_valid_deal": False}
 
 def main():
