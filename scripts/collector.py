@@ -12,7 +12,6 @@ import feedparser
 import requests
 from datetime import datetime, timezone
 
-# 精简 RSS 源或限制单源抓取数，防止触发 429 速率限制
 RSS_SOURCES = [
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
@@ -28,6 +27,7 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
+# 🛡️ 严格独立提取环境变量，杜绝变量串号
 raw_api_key = os.environ.get("LLM_API_KEY", "")
 API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
@@ -37,11 +37,12 @@ BASE_URL = "".join(c for c in raw_base_url if c.isprintable() and c not in (' ',
 raw_model = os.environ.get("LLM_MODEL", "")
 MODEL = "".join(c for c in raw_model if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
+# 强制 DeepSeek 默认兜底
 if not BASE_URL or not BASE_URL.startswith("http"):
-    BASE_URL = "https://coarena.ai/api/v1"
+    BASE_URL = "https://api.deepseek.com/v1"
 
 if not MODEL:
-    MODEL = "claude-fable-5-2"
+    MODEL = "deepseek-chat"
 
 client_base_url = BASE_URL
 
@@ -147,6 +148,8 @@ def generate_id(title, url):
 
 def main():
     masked_key = f"{API_KEY[:4]}...{API_KEY[-4:]}" if len(API_KEY) > 8 else "无效或为空"
+    print(f"【调试信息】当前使用的 Base URL: {BASE_URL}")
+    print(f"【调试信息】当前使用的 Model: {MODEL}")
     print(f"【调试信息】当前清理后的 API_KEY 长度: {len(API_KEY)}, 预览: {masked_key}")
 
     if not API_KEY or "***" in API_KEY or len(API_KEY) < 10:
@@ -175,7 +178,6 @@ def main():
     for src in RSS_SOURCES:
         try:
             feed = feedparser.parse(src["url"])
-            # 限制每个源只取前 3 条，避免瞬间触发 429 速率限制
             for entry in feed.entries[:3]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
@@ -202,8 +204,7 @@ def main():
                     existing_ids.add(deal_id)
                     new_added_count += 1
 
-                # ⏳ 每次 AI 请求后强制休眠 2 秒，防止触发平台的每分钟频率上限 (429)
-                time.sleep(2)
+                time.sleep(1.5)
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
