@@ -26,10 +26,8 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
+# 获取并严格清洗环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "")
-if "LLM_API_" in raw_api_key:
-    raw_api_key = ""
-
 API_KEY = "".join(c for c in raw_api_key if ord(c) < 128).strip().strip('"').strip("'")
 
 raw_base_url = os.environ.get("LLM_BASE_URL", "")
@@ -129,7 +127,7 @@ def call_universal_llm(prompt_text):
     except Exception as e:
         print(f"LLM 请求异常: {str(e)[:120]}")
     
-    return {"is_valid_deal": False}
+    return {"is_valid_deal": false}
 
 def load_json(filepath):
     if not os.path.exists(filepath):
@@ -147,8 +145,15 @@ def generate_id(title, url):
     return hashlib.md5(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
 
 def main():
-    if not API_KEY or API_KEY.startswith("***") or len(API_KEY) < 10:
-        print("【致命错误】未检测到有效的 LLM_API_KEY！请检查 GitHub Secrets 中是否填入了真实的 Coarena 密钥（coa_...）。")
+    # 🔍 调试打印当前读取到的 API Key 状态（只显示前4位和后4位，确保安全）
+    masked_key = f"{API_KEY[:4]}...{API_KEY[-4:]}" if len(API_KEY) > 8 else "太短或为空"
+    print(f"【调试信息】当前读取到的 API_KEY 长度: {len(API_KEY)}, 预览: {masked_key}")
+
+    if not API_KEY or "***" in API_KEY or "'" in API_KEY or '"' in API_KEY or len(API_KEY) < 10:
+        print("❌ 【严重错误】GitHub Secrets 中的 LLM_API_KEY 包含星号 '***' 或非法引号！")
+        print("👉 请前往 GitHub 仓库: Settings -> Secrets and variables -> Actions")
+        print("👉 找到 LLM_API_KEY，点击 Delete 删掉它。")
+        print("👉 重新点 New repository secret，名字填 LLM_API_KEY，值里面【只粘贴你的真实密钥（coa_...）】，绝对不要带引号、空格或星号！")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
