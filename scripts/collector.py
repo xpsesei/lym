@@ -12,6 +12,7 @@ import feedparser
 import requests
 from datetime import datetime, timezone
 
+# 🌐 全量监控所有 RSS 源
 RSS_SOURCES = [
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
@@ -27,13 +28,11 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 智能防错清洗：如果里面不幸混入了其他变量，强制只提取 sk- 开头的那段真实密钥
+# 🛡️ 智能清洗环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
 if "sk-" in raw_api_key:
-    # 自动定位并截取 sk- 开头的部分
     start_idx = raw_api_key.find("sk-")
     raw_api_key = raw_api_key[start_idx:]
-    # 如果后面连着其他变量名（比如连了 LLM_BASE），以空格或换行切断
     for sep in [' ', '\n', '\r', '\t', 'LLM_']:
         if sep in raw_api_key:
             raw_api_key = raw_api_key.split(sep)[0]
@@ -72,11 +71,11 @@ SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、空投与金融优惠的情报分析专家。
 请从原始内容中提取符合以下7大领域的真实活动：
 1. AI订阅优惠
-2. Crypto (空投, 测试网, 积分, 交易所活动)
-3. U卡 (海外虚拟卡, 实体卡, 返现, 开卡奖励)
-4. 海外银行 (开户奖励, 存款优惠, 推荐奖励)
-5. VPS及云服务 (免费服务器, 计算额度, 域名)
-6. 软件与数字服务 (免费试用, 终身会员, 开发者福利)
+2. Crypto (空投、测试网、积分、交易所活动)
+3. U卡 (海外虚拟卡、实体卡、返现、开卡奖励)
+4. 海外银行 (开户奖励、存款优惠、推荐奖励)
+5. VPS及云服务 (免费服务器、云计算额度、域名)
+6. 软件与数字服务 (免费试用、终身会员、开发者福利)
 7. 其他值得关注的全球优惠活动
 
 【严格质量红线】：
@@ -181,9 +180,12 @@ def main():
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
+    # 📦 加载历史数据（确保历史采集的羊毛内容完整保留、永不丢失）
     active_deals = load_json(ACTIVE_FILE)
     archived_deals = load_json(ARCHIVE_FILE)
+    print(f"【历史数据】当前已积累有效活动: {len(active_deals)} 条, 已归档活动: {len(archived_deals)} 条")
 
+    # 检查过期活动并归档
     still_active = []
     for deal in active_deals:
         end_date = deal.get("end_date", "")
@@ -194,13 +196,17 @@ def main():
             still_active.append(deal)
     active_deals = still_active
 
+    # 构建现有 ID 集合，防止重复抓取相同的活动
     existing_ids = {d["id"] for d in active_deals} | {d["id"] for d in archived_deals}
 
     new_added_count = 0
     for src in RSS_SOURCES:
         try:
+            print(f"正在抓取源: {src['name']} ...")
             feed = feedparser.parse(src["url"])
-            for entry in feed.entries[:3]:
+            
+            # 🚀 全量放开：每个源抓取前 12 条最新内容（确保不漏掉有效信息）
+            for entry in feed.entries[:12]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
                 summary = clean_text(entry.get("summary", entry.get("description", "")))
@@ -210,7 +216,7 @@ def main():
                     
                 deal_id = generate_id(title, link)
                 if deal_id in existing_ids:
-                    continue
+                    continue # 已经存在的数据直接跳过，避免重复
 
                 prompt_content = f"来源: {src['name']}\n标题: {title}\n链接: {link}\n摘要: {summary[:1500]}"
                 parsed = call_universal_llm(prompt_content)
@@ -222,18 +228,28 @@ def main():
                     if not parsed.get("official_url"):
                         parsed["official_url"] = link
                     
+                    # ➕ 将新采集到的有效活动插入到列表最前方（实现新老内容完美累加）
                     active_deals.insert(0, parsed)
                     existing_ids.add(deal_id)
                     new_added_count += 1
+                    print(key := f"  -> 成功捕获新羊毛: {parsed.get('title')}")
 
-                time.sleep(1.5)
+                # ⏳ 适当休眠，防止触发 DeepSeek 并发频率限制
+                time.sleep(1.0)
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
+    # 按创建日期和价值评分排序
     active_deals.sort(key=lambda x: (x.get("created_at") == today_date, x.get("value_score", 0)), reverse=True)
+    
+    # 💾 保存回 JSON 文件（旧内容 + 新内容完整持久化）
     save_json(ACTIVE_FILE, active_deals)
     save_json(ARCHIVE_FILE, archived_deals[:500])
-    print(f"采集完成，新增有效优惠/羊毛: {new_added_count} 条")
+    
+    print(f"========================================")
+    print(f"采集完成！本次新增有效优惠: {new_added_count} 条")
+    print(f"当前总有效活动数: {len(active_deals)} 条")
+    print(f"========================================")
 
 if __name__ == "__main__":
     main()
