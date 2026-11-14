@@ -1,3 +1,10 @@
+import sys
+import io
+
+# 强制标准输出和错误输出为 UTF-8，彻底解决 Linux 环境下 print 报错问题
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 import os
 import json
 import hashlib
@@ -71,8 +78,8 @@ SYSTEM_PROMPT = """
 def clean_text(text):
     if not text:
         return ""
-    # 过滤掉零宽空格 (\u200b)、零宽连字符、BOM 等特殊不可见字符，防止编码错误
-    return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text)
+    # 过滤掉零宽空格、BOM 及控制字符
+    return re.sub(r'[\u200b\u200c\u200d\ufeff\r\t]', ' ', text).strip()
 
 def load_json(filepath):
     if not os.path.exists(filepath):
@@ -129,7 +136,7 @@ def analyze_with_ai(entry, source_name):
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        print(f"AI 分析失败 ({title[:20]}...): {e}")
+        print(f"AI 分析跳过异常条目: {e}")
         return {"is_valid_deal": False}
 
 def main():
