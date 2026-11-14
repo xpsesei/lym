@@ -1,13 +1,14 @@
 import sys
 import io
 
-# 强制标准输出和错误输出为 UTF-8
+# 强制标准输出和错误输出为 UTF-8，彻底解决 Linux 终端编码问题
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 import os
 import json
 import hashlib
+import re
 import feedparser
 import requests
 from datetime import datetime, timezone
@@ -78,10 +79,16 @@ def clean_text(text):
     if not text:
         return ""
     if isinstance(text, bytes):
-        text = text.decode('utf-8', errors='ignore')
-    # 彻底清除所有零宽字符、BOM 以及可能导致编码崩溃的不可见控制符
-    for char in ['\u200b', '\u200c', '\u200d', '\ufeff', '\r']:
+        try:
+            text = text.decode('utf-8', errors='ignore')
+        except:
+            text = text.decode('latin1', errors='ignore')
+    
+    # 过滤掉所有零宽空格、BOM 及不可见控制字符
+    invisible_chars = ['\u200b', '\u200c', '\u200d', '\ufeff', '\u2060', '\u00ad', '\r']
+    for char in invisible_chars:
         text = text.replace(char, '')
+        
     return text.strip()
 
 def load_json(filepath):
@@ -110,7 +117,7 @@ def send_push_notification(deal):
                 "disable_web_page_preview": True
             }, timeout=10)
         except Exception as e:
-            print(f"Telegram 推送失败: {e}")
+            print("Telegram 推送异常")
 
     if FEISHU_URL:
         try:
@@ -119,7 +126,7 @@ def send_push_notification(deal):
                 "content": {"text": msg}
             }, timeout=10)
         except Exception as e:
-            print(f"飞书推送失败: {e}")
+            print("飞书推送异常")
 
 def analyze_with_ai(entry, source_name):
     title = clean_text(entry.get('title', ''))
@@ -139,9 +146,12 @@ def analyze_with_ai(entry, source_name):
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        # 安全捕获异常并转为纯净字符串打印，防止二次编码崩溃
-        err_msg = str(e).encode('ascii', errors='replace').decode('ascii')
-        print(f"AI 分析跳过异常条目: {err_msg}")
+        # 绝对安全的异常处理，防止异常文本本身的字符触发 ASCII 编码崩溃
+        try:
+            err_str = str(e).encode('utf-8', errors='ignore').decode('utf-8', errors='ignore')
+        except:
+            err_str = "API请求失败"
+        print(f"AI 分析跳过异常条目: {err_str[:80]}")
         return {"is_valid_deal": False}
 
 def main():
