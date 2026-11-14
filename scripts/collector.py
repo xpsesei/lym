@@ -1,6 +1,7 @@
 import os
 import json
 import hashlib
+import re
 import feedparser
 import requests
 from datetime import datetime, timezone
@@ -67,6 +68,12 @@ SYSTEM_PROMPT = """
 }
 """
 
+def clean_text(text):
+    if not text:
+        return ""
+    # 过滤掉零宽空格 (\u200b)、零宽连字符、BOM 等特殊不可见字符，防止编码错误
+    return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text)
+
 def load_json(filepath):
     if not os.path.exists(filepath):
         return []
@@ -80,12 +87,11 @@ def save_json(filepath, data):
 
 def generate_id(title, url):
     raw = f"{title.strip().lower()}_{url.strip().lower()}"
-    return hashlib.md5(raw.encode("utf-8")).hexdigest()[:12]
+    return hashlib.md5(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
 
 def send_push_notification(deal):
     msg = f"🔥 【高价值优惠情报雷达】\n\n📌 名称: {deal['title']}\n📂 分类: {deal['category']}\n💰 价值: {deal['value_desc']} (评分: {deal['value_score']})\n🏷️ 门槛: {deal['threshold_tag']}\n⏰ 截止: {deal['end_date']}\n🔗 链接: {deal['official_url']}"
     
-    # Telegram 推送
     if TG_TOKEN and TG_CHAT_ID:
         try:
             requests.post(f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage", json={
@@ -96,7 +102,6 @@ def send_push_notification(deal):
         except Exception as e:
             print(f"Telegram 推送失败: {e}")
 
-    # 飞书 Webhook 推送
     if FEISHU_URL:
         try:
             requests.post(FEISHU_URL, json={
@@ -107,7 +112,11 @@ def send_push_notification(deal):
             print(f"飞书推送失败: {e}")
 
 def analyze_with_ai(entry, source_name):
-    content = f"标题: {entry.get('title', '')}\n链接: {entry.get('link', '')}\n摘要: {entry.get('summary', '')[:1500]}"
+    title = clean_text(entry.get('title', ''))
+    link = clean_text(entry.get('link', ''))
+    summary = clean_text(entry.get('summary', ''))
+    
+    content = f"标题: {title}\n链接: {link}\n摘要: {summary[:1500]}"
     try:
         response = client.chat.completions.create(
             model=MODEL,
@@ -120,7 +129,7 @@ def analyze_with_ai(entry, source_name):
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        print(f"AI 分析失败: {e}")
+        print(f"AI 分析失败 ({title[:20]}...): {e}")
         return {"is_valid_deal": False}
 
 def main():
@@ -148,7 +157,12 @@ def main():
     for src in RSS_SOURCES:
         feed = feedparser.parse(src["url"])
         for entry in feed.entries[:8]:
-            deal_id = generate_id(entry.get("title", ""), entry.get("link", ""))
+            title = clean_text(entry.get("title", ""))
+            link = clean_text(entry.get("link", ""))
+            if not title or not link:
+                continue
+                
+            deal_id = generate_id(title, link)
             if deal_id in existing_ids:
                 continue
 
@@ -158,13 +172,12 @@ def main():
                 parsed["created_at"] = today_date
                 parsed["last_verified"] = now_str
                 if not parsed.get("official_url"):
-                    parsed["official_url"] = entry.get("link", "")
+                    parsed["official_url"] = link
                 
                 active_deals.insert(0, parsed)
                 existing_ids.add(deal_id)
                 new_added_count += 1
 
-                # 高价值（>=85分）触发即时推送
                 if parsed.get("value_score", 0) >= 85:
                     send_push_notification(parsed)
 
