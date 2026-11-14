@@ -12,7 +12,7 @@ import feedparser
 import requests
 from datetime import datetime, timezone
 
-# 🌍 覆盖全球 AI、Crypto、海外银行、VPS、开发者资源及全球“撸羊毛”的高权重 RSS 源
+# 🌍 覆盖全球 AI, Crypto, 海外银行, VPS, 开发者资源及全球“撸羊毛”的高权重 RSS 源
 RSS_SOURCES = [
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
@@ -20,7 +20,6 @@ RSS_SOURCES = [
     {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
     {"name": "GitHub Blog", "url": "https://github.blog/feed/", "default_cat": "VPS及云服务"},
     {"name": "Product Hunt", "url": "https://www.producthunt.com/feed", "default_cat": "软件与数字服务"},
-    # 增加全球羊毛、限免、优惠线报源
     {"name": "Hacker News (Free/Deals)", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"},
     {"name": "Reddit Freebies", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
     {"name": "Reddit Deals", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"}
@@ -29,15 +28,25 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 通用 AI 接口配置（支持 OpenAI, DeepSeek, SiliconFlow, OpenRouter, OneAPI 等所有兼容接口）
+# 获取环境变量
 API_KEY = os.environ.get("LLM_API_KEY", "").strip()
-BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").strip().rstrip('/')
+BASE_URL = os.environ.get("LLM_BASE_URL", "").strip().rstrip('/')
 MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini").strip()
 
+# 🛡️ 智能容错：如果用户未配置 BASE_URL 或留空，自动使用官方默认地址
+if not BASE_URL or not BASE_URL.startswith("http"):
+    BASE_URL = "https://api.openai.com/v1"
+
+# 如果未指定模型，自动赋予默认值
+if not MODEL:
+    MODEL = "gpt-4o-mini"
+
+client_base_url = BASE_URL
+
 # 通知配置
-TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TG_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
-FEISHU_URL = os.environ.get("FEISHU_WEBHOOK_URL", "")
+TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+TG_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+FEISHU_URL = os.environ.get("FEISHU_WEBHOOK_URL", "").strip()
 
 SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、空投与金融优惠的情报分析专家。
@@ -77,13 +86,11 @@ SYSTEM_PROMPT = """
 """
 
 def clean_text(text):
-    """强力清洗文本，彻底剔除所有零宽字符、不可见符号及潜在的 ASCII 编码隐患"""
     if not text:
         return ""
     if isinstance(text, bytes):
         text = text.decode('utf-8', errors='ignore')
     
-    # 只保留可打印字符与换行/制表符
     safe_chars = []
     for c in text:
         if c.isprintable() or c in ('\n', '\t'):
@@ -92,15 +99,13 @@ def clean_text(text):
             safe_chars.append(' ')
     text = "".join(safe_chars)
     
-    # 显式清除常见零宽字符
     for char in ['\u200b', '\u200c', '\u200d', '\ufeff', '\u2060', '\u00ad', '\r', '\u200e', '\u200f']:
         text = text.replace(char, '')
         
     return text.strip()
 
 def call_universal_llm(prompt_text):
-    """使用原生 requests.post 调用任何兼容 OpenAI 格式的 LLM API，绕过 SDK 编码限制"""
-    url = f"{BASE_URL}/chat/completions"
+    url = f"{client_base_url}/chat/completions"
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
@@ -122,9 +127,9 @@ def call_universal_llm(prompt_text):
             content = result_json["choices"][0]["message"]["content"]
             return json.loads(content)
         else:
-            print(f"LLM API 状态码异常: {response.status_code}, 详情: {response.text[:100]}")
+            print(f"LLM API 状态码异常 ({response.status_code}): {response.text[:120]}")
     except Exception as e:
-        print(f"LLM 请求异常: {str(e)[:100]}")
+        print(f"LLM 请求异常: {str(e)[:120]}")
     
     return {"is_valid_deal": False}
 
