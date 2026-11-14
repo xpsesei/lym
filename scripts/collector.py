@@ -1,7 +1,7 @@
 import sys
 import io
 
-# 强制标准输出和错误输出为 UTF-8，彻底杜绝终端乱码
+# 强制标准输出和错误输出为 UTF-8
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
@@ -28,12 +28,16 @@ RSS_SOURCES = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 获取环境变量，并强力清洗所有换行符、空格、引号，防止 Header 注入报错
-API_KEY = os.environ.get("LLM_API_KEY", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
-BASE_URL = os.environ.get("LLM_BASE_URL", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "").rstrip('/')
-MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
+# 🛡️ 终极安全过滤：强制剥离 API_KEY、BASE_URL 中所有非 ASCII 字符（如隐藏的 \u200b 零宽空格），防止 requests Header 编码崩溃
+raw_api_key = os.environ.get("LLM_API_KEY", "")
+API_KEY = "".join(c for c in raw_api_key if ord(c) < 128).strip().strip('"').strip("'")
 
-# 智能容错：如果用户未配置 BASE_URL，自动使用官方默认地址
+raw_base_url = os.environ.get("LLM_BASE_URL", "")
+BASE_URL = "".join(c for c in raw_base_url if ord(c) < 128).strip().strip('"').strip("'").rstrip('/')
+
+raw_model = os.environ.get("LLM_MODEL", "")
+MODEL = "".join(c for c in raw_model if ord(c) < 128).strip().strip('"').strip("'")
+
 if not BASE_URL or not BASE_URL.startswith("http"):
     BASE_URL = "https://api.openai.com/v1"
 
@@ -42,10 +46,10 @@ if not MODEL:
 
 client_base_url = BASE_URL
 
-# 通知配置（同样进行防错清洗）
-TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
-TG_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
-FEISHU_URL = os.environ.get("FEISHU_WEBHOOK_URL", "").strip().strip('"').strip("'").replace("\n", "").replace("\r", "")
+# 通知配置安全过滤
+TG_TOKEN = "".join(c for c in os.environ.get("TELEGRAM_BOT_TOKEN", "") if ord(c) < 128).strip()
+TG_CHAT_ID = "".join(c for c in os.environ.get("TELEGRAM_CHAT_ID", "") if ord(c) < 128).strip()
+FEISHU_URL = "".join(c for c in os.environ.get("FEISHU_WEBHOOK_URL", "") if ord(c) < 128).strip()
 
 SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、空投与金融优惠的情报分析专家。
@@ -171,7 +175,7 @@ def send_push_notification(deal):
 
 def main():
     if not API_KEY or API_KEY.startswith("***"):
-        print("【致命错误】LLM_API_KEY 无效！请检查 GitHub 仓库 Secrets 中是否填入了真实的 API Key（而不是掩码或带空格）。")
+        print("【致命错误】LLM_API_KEY 无效！请检查 GitHub 仓库 Secrets 中是否填入了真实的 API Key。")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
