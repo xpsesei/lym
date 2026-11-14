@@ -10,9 +10,10 @@ import hashlib
 import time
 import feedparser
 import requests
+from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
-# 🌐 全量监控所有高质量 RSS 源
+# 🌐 1. 全量监控所有高质量 RSS 源
 RSS_SOURCES = [
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
@@ -26,6 +27,11 @@ RSS_SOURCES = [
     {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
     {"name": "BetaList (New Startups)", "url": "https://betalist.com/feed", "default_cat": "软件与数字服务"},
     {"name": "OzBargain (Tech/Global Deals)", "url": "https://www.ozbargain.com.au/feed", "default_cat": "其他优惠"}
+]
+
+# 📱 2. 监控公开的 Telegram 频道（已成功加入 ahmivaults）
+TG_CHANNELS = [
+    "ahmivaults"  # 对应 https://t.me/s/ahmivaults
 ]
 
 ACTIVE_FILE = "data/active_deals.json"
@@ -143,6 +149,39 @@ def generate_id(title, url):
     raw = f"{title.strip().lower()}_{url.strip().lower()}"
     return hashlib.md5(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
 
+# 🔍 抓取公开 Telegram 频道网页内容的函数
+def fetch_telegram_channel_entries(channel_username):
+    entries = []
+    url = f"https://t.me/s/{channel_username}"
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    try:
+        response = requests.get(url, headers=headers, timeout=20)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            messages = soup.find_all('div', class_='tgme_widget_message')
+            for msg in messages[-15:]:
+                text_div = msg.find('div', class_='tgme_widget_message_text')
+                if not text_div:
+                    continue
+                content = clean_text(text_div.get_text(separator="\n", strip=True))
+                if not content:
+                    continue
+                
+                link_a = msg.find('a', class_='tgme_widget_message_date')
+                post_link = link_a['href'] if link_a and link_a.has_attr('href') else f"https://t.me/{channel_username}"
+                
+                first_line = content.split('\n')[0]
+                title = first_line[:50] if len(first_line) > 3 else f"Telegram 推送 (@{channel_username})"
+                
+                entries.append({
+                    "title": title,
+                    "link": post_link,
+                    "summary": content
+                })
+    except Exception as e:
+        print(f"抓取 Telegram 频道 @{channel_username} 异常: {str(e)[:100]}")
+    return entries
+
 def main():
     if not API_KEY or len(API_KEY) < 10:
         print("❌ API Key 无效或为空！")
@@ -167,9 +206,10 @@ def main():
     existing_ids = {d["id"] for d in active_deals} | {d["id"] for d in archived_deals}
     new_added_count = 0
 
+    # 1. 采集所有 RSS 源
     for src in RSS_SOURCES:
         try:
-            print(f"正在抓取源: {src['name']} ...")
+            print(f"正在抓取 RSS 源: {src['name']} ...")
             feed = feedparser.parse(src["url"])
             for entry in feed.entries[:12]:
                 title = clean_text(entry.get("title", ""))
@@ -199,10 +239,44 @@ def main():
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
+    # 2. 采集配置的 Telegram 频道 (ahmivaults)
+    for ch in TG_CHANNELS:
+        try:
+            print(f"正在抓取 Telegram 公开频道: @{ch} ...")
+            tg_entries = fetch_telegram_channel_entries(ch)
+            for entry in tg_entries:
+                title = entry["title"]
+                link = entry["link"]
+                summary = entry["summary"]
+                
+                deal_id = generate_id(title, link)
+                if deal_id in existing_ids:
+                    continue
+
+                prompt_content = f"来源: Telegram Channel @{ch}\n标题: {title}\n链接: {link}\n正文: {summary[:1500]}"
+                parsed = call_universal_llm(prompt_content)
+                
+                if parsed.get("is_valid_deal"):
+                    parsed["id"] = deal_id
+                    parsed["created_at"] = today_date
+                    parsed["last_verified"] = now_str
+                    if not parsed.get("official_url"):
+                        parsed["official_url"] = link
+                    if not parsed.get("source"):
+                        parsed["source"] = f"TG: @{ch}"
+                        
+                    active_deals.insert(0, parsed)
+                    existing_ids.add(deal_id)
+                    new_added_count += 1
+                    print(f"  -> 成功从 Telegram 捕获羊毛: {parsed.get('title')}")
+                time.sleep(1.0)
+        except Exception as e:
+            print(f"抓取 Telegram 频道 @{ch} 失败: {str(e)[:100]}")
+
     active_deals.sort(key=lambda x: (x.get("created_at") == today_date, x.get("value_score", 0)), reverse=True)
     save_json(ACTIVE_FILE, active_deals)
     save_json(ARCHIVE_FILE, archived_deals[:500])
-    print(f"采集完成！新增: {new_added_count} 条，总计有效: {len(active_deals)} 条")
+    print(f"采集完成！本次新增: {new_added_count} 条，总计有效: {len(active_deals)} 条")
 
 if __name__ == "__main__":
     main()
