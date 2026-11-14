@@ -22,7 +22,7 @@ RSS_SOURCES = [
     {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
     {"name": "Product Hunt", "url": "https://www.producthunt.com/feed", "default_cat": "软件与数字服务"},
     
-    # --- VPS 与服务器特惠源 (海量增加) ---
+    # --- VPS 与服务器特惠源 ---
     {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
     {"name": "WHT (Web Hosting Talk Deals)", "url": "https://www.webhostingtalk.com/syndication.php?limit=15&forma=rss", "default_cat": "VPS及云服务"},
     {"name": "Vpsmm (VPS优惠)", "url": "https://www.vpsmm.com/feed", "default_cat": "VPS及云服务"},
@@ -43,15 +43,15 @@ RSS_SOURCES = [
     {"name": "Hacker News (Free/Deals)", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"}
 ]
 
-# 📱 2. 海量高质量公开 Telegram 频道源（涵盖 VPS、空投、羊毛、数字资产）
+# 📱 2. 海量高质量公开 Telegram 频道源（使用标准的 # 作为注释）
 TG_CHANNELS = [
-    "ahmivaults",        // 你指定的频道
-    "vps_deals",         // 全球 VPS 优惠推送
-    "freevps",           // 免费与特价云服务器
-    "airdropinspect",    // 热门空投监测
-    "CryptoAirdrops",    // 空投线报
-    "Ucard_news",        // U卡与虚拟卡资讯
-    "DealHunt"           // 全球数码与软件折扣
+    "ahmivaults",        # 你指定的频道
+    "vps_deals",         # 全球 VPS 优惠推送
+    "freevps",           # 免费与特价云服务器
+    "airdropinspect",    # 热门空投监测
+    "CryptoAirdrops",    # 空投线报
+    "Ucard_news",        # U卡与虚拟卡资讯
+    "DealHunt"           # 全球数码与软件折扣
 ]
 
 ACTIVE_FILE = "data/active_deals.json"
