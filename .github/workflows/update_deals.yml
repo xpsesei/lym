@@ -2,8 +2,9 @@ name: Global Deals Auto Collector
 
 on:
   schedule:
+    # 每 2 小时自动运行一次 (UTC时间)
     - cron: '0 */2 * * *'
-  workflow_dispatch:
+  workflow_dispatch: # 支持在 GitHub 后台手动点击按钮触发测试
 
 permissions:
   contents: write
@@ -31,6 +32,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          PYTHONIOENCODING: utf-8  # 强制 Python 标准输出为 UTF-8，彻底解决特殊字符编码报错
         run: python scripts/collector.py
 
       - name: Commit and push updated data
