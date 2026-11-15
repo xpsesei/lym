@@ -70,13 +70,13 @@ API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '
 
 raw_base_url = os.environ.get("LLM_BASE_URL", "").strip().strip('"').strip("'")
 if not raw_base_url or "coarena" in raw_base_url or not raw_base_url.startswith("http"):
-    # 💡 强制兜底：如果没配或配错，直接锁定 CoArena 正确地址
     BASE_URL = "https://coarena.ai/api/v1"
 else:
     BASE_URL = raw_base_url.rstrip('/')
 
 raw_model = os.environ.get("LLM_MODEL", "").strip().strip('"').strip("'")
-MODEL = raw_model if raw_model else "deepseek-chat"
+# 💡 适配 CoArena 平台常用的模型名称（如未设置则默认用 deepseek/deepseek-chat）
+MODEL = raw_model if raw_model else "deepseek/deepseek-chat"
 
 client_base_url = BASE_URL
 
@@ -141,7 +141,7 @@ def call_universal_llm(prompt_text):
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=45)
         if response.status_code != 200:
-            print(f"❌ API 错误 [{response.status_code} at {url}]: {response.text[:200]}", file=sys.stderr)
+            print(f"❌ API 错误 [{response.status_code} at {url} (Model: {MODEL})]: {response.text[:250]}", file=sys.stderr)
             return {"is_valid_deal": False}
         
         res_json = response.json()
@@ -205,7 +205,8 @@ def main():
         print("❌ API Key 无效或为空！请检查 GitHub Secrets 中的 LLM_API_KEY")
         return
 
-    print(f"🔗 当前使用的 LLM API 地址: {client_base_url}")
+    print(f"🔗 当前 API 地址: {client_base_url}")
+    print(f"🤖 当前使用模型: {MODEL}")
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
