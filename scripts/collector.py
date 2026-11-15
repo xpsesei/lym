@@ -13,62 +13,54 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
-# 🌐 全网超级海量 RSS 源（覆盖 VPS、云服务、Crypto、U卡、银行、免费资源、开发者限免）
+# 🌐 全网超级海量 RSS 源
 RSS_SOURCES = [
-    # --- AI 与开发者技术 ---
-    {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
-    {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
-    {"name": "GitHub Blog", "url": "https://github.blog/feed/", "default_cat": "VPS及云服务"},
-    {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
-    {"name": "Product Hunt", "url": "https://www.producthunt.com/feed", "default_cat": "软件与数字服务"},
-    
-    # --- VPS 与服务器特惠源 (海量增加) ---
-    {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
-    {"name": "WHT (Web Hosting Talk Deals)", "url": "https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss", "default_cat": "VPS及云服务"},
-    {"name": "Vpsmm (VPS优惠)", "url": "https://www.vpsmm.com/feed", "default_cat": "VPS及云服务"},
-    {"name": "NodeSeek Latest", "url": "https://www.nodeseek.com/rss", "default_cat": "VPS及云服务"},
-
-    # --- Crypto 与空投资讯源 ---
-    {"name": "Binance Announcement", "url": "https://www.binance.com/en/support/announcement/rss", "default_cat": "Crypto"},
-    {"name": "CoinDesk News", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/", "default_cat": "Crypto"},
-    {"name": "Decrypt Co", "url": "https://decrypt.co/feed", "default_cat": "Crypto"},
-    {"name": "CoinTelegraph RSS", "url": "https://cointelegraph.com/rss", "default_cat": "Crypto"},
-    {"name": "Blockworks RSS", "url": "https://blockworks.co/feed", "default_cat": "Crypto"},
-
-    # --- 软件、限免、绝对免费资源与综合折扣源 ---
-    {"name": "Reddit Freebies", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
-    {"name": "Reddit Deals", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"},
-    {"name": "Reddit AppHookUp", "url": "https://www.reddit.com/r/AppHookUp/.rss", "default_cat": "软件与数字服务"},
-    {"name": "Reddit FreeGameFindings", "url": "https://www.reddit.com/r/freeGameFindings/.rss", "default_cat": "软件与数字服务"},
-    {"name": "BetaList (Startups)", "url": "https://betalist.com/feed", "default_cat": "软件与数字服务"},
-    {"name": "OzBargain (Global Tech Deals)", "url": "https://www.ozbargain.com.au/feed", "default_cat": "其他优惠"},
-    {"name": "Hacker News (Free/Deals)", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"}
+    {"name": "OpenAI News", "url": "[https://openai.com/news/rss.xml](https://openai.com/news/rss.xml)", "default_cat": "AI订阅优惠"},
+    {"name": "Anthropic News", "url": "[https://www.anthropic.com/news/rss.xml](https://www.anthropic.com/news/rss.xml)", "default_cat": "AI订阅优惠"},
+    {"name": "GitHub Blog", "url": "[https://github.blog/feed/](https://github.blog/feed/)", "default_cat": "VPS及云服务"},
+    {"name": "Cloudflare Blog", "url": "[https://blog.cloudflare.com/rss/](https://blog.cloudflare.com/rss/)", "default_cat": "VPS及云服务"},
+    {"name": "Product Hunt", "url": "[https://www.producthunt.com/feed](https://www.producthunt.com/feed)", "default_cat": "软件与数字服务"},
+    {"name": "LowEndBox (VPS Deals)", "url": "[https://lowendbox.com/feed/](https://lowendbox.com/feed/)", "default_cat": "VPS及云服务"},
+    {"name": "WHT (Web Hosting Talk)", "url": "[https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss](https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss)", "default_cat": "VPS及云服务"},
+    {"name": "Vpsmm (VPS优惠)", "url": "[https://www.vpsmm.com/feed](https://www.vpsmm.com/feed)", "default_cat": "VPS及云服务"},
+    {"name": "NodeSeek Latest", "url": "[https://www.nodeseek.com/rss](https://www.nodeseek.com/rss)", "default_cat": "VPS及云服务"},
+    {"name": "Binance Announcement", "url": "[https://www.binance.com/en/support/announcement/rss](https://www.binance.com/en/support/announcement/rss)", "default_cat": "Crypto"},
+    {"name": "CoinDesk News", "url": "[https://www.coindesk.com/arc/outboundfeeds/rss/](https://www.coindesk.com/arc/outboundfeeds/rss/)", "default_cat": "Crypto"},
+    {"name": "Decrypt Co", "url": "[https://decrypt.co/feed](https://decrypt.co/feed)", "default_cat": "Crypto"},
+    {"name": "CoinTelegraph", "url": "[https://cointelegraph.com/rss](https://cointelegraph.com/rss)", "default_cat": "Crypto"},
+    {"name": "Blockworks", "url": "[https://blockworks.co/feed](https://blockworks.co/feed)", "default_cat": "Crypto"},
+    {"name": "Reddit Freebies", "url": "[https://www.reddit.com/r/freebies/.rss](https://www.reddit.com/r/freebies/.rss)", "default_cat": "软件与数字服务"},
+    {"name": "Reddit Deals", "url": "[https://www.reddit.com/r/deals/.rss](https://www.reddit.com/r/deals/.rss)", "default_cat": "其他优惠"},
+    {"name": "Reddit AppHookUp", "url": "[https://www.reddit.com/r/AppHookUp/.rss](https://www.reddit.com/r/AppHookUp/.rss)", "default_cat": "软件与数字服务"},
+    {"name": "Reddit FreeGameFindings", "url": "[https://www.reddit.com/r/freeGameFindings/.rss](https://www.reddit.com/r/freeGameFindings/.rss)", "default_cat": "软件与数字服务"},
+    {"name": "BetaList", "url": "[https://betalist.com/feed](https://betalist.com/feed)", "default_cat": "软件与数字服务"},
+    {"name": "OzBargain", "url": "[https://www.ozbargain.com.au/feed](https://www.ozbargain.com.au/feed)", "default_cat": "其他优惠"},
+    {"name": "Hacker News Deals", "url": "[https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway](https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway)", "default_cat": "其他优惠"}
 ]
 
-# 📱 超级海量公开 Telegram 频道源（全网覆盖 U卡、海外银行、VPS特惠、空投、免费资源、科技数码羊毛）
+# 📱 超级海量 Telegram 频道源
 TG_CHANNELS = [
-    "ahmivaults",          # 核心指定频道
-    "vps_deals",           # 全球 VPS 优惠
-    "freevps",             # 免费与特价云服务器
-    "airdropinspect",      # 热门空投监测
-    "CryptoAirdrops",      # 空投线报
-    "Ucard_news",          # U卡与虚拟卡资讯
-    "DealHunt",            # 全球数码与软件折扣
-    "bank_accounts_deals", # 海外银行与开户奖励
-    "freebies_tg",         # 全球免费资源线报
-    "crypto_airdrops_free",# 零撸空投
-    "vps_chat",            # VPS 交流与特价通知
-    "free_vps",            # 免费云服务器
-    "airdrop_alert",       # 空投提醒
-    "virtual_cards",       # 虚拟卡与U卡福利
-    "tech_deals",          # 科技数码折扣
-    "giveaways_hub"        # 全球福利抽奖与羊毛
+    "ahmivaults",
+    "vps_deals",
+    "freevps",
+    "airdropinspect",
+    "CryptoAirdrops",
+    "Ucard_news",
+    "DealHunt",
+    "bank_accounts_deals",
+    "freebies_tg",
+    "crypto_airdrops_free",
+    "vps_chat",
+    "free_vps",
+    "airdrop_alert",
+    "virtual_cards",
+    "tech_deals",
+    "giveaways_hub"
 ]
 
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 智能清洗环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
 for sep in [' ', '\n', '\r', '\t', 'LLM_']:
     if sep in raw_api_key:
@@ -91,13 +83,12 @@ for sep in [' ', '\n', '\r', '\t', 'LLM_']:
 MODEL = "".join(c for c in raw_model if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
 if not BASE_URL or not BASE_URL.startswith("http"):
-    BASE_URL = "https://api.deepseek.com/v1"
+    BASE_URL = "[https://coarena.ai/api/v1](https://coarena.ai/api/v1)"
 if not MODEL:
     MODEL = "deepseek-chat"
 
 client_base_url = BASE_URL
 
-# 💡 宽松高效的 AI 判定提示词
 SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、VPS促销、软件折扣与空投的情报分析专家。
 请从给定的文章标题、摘要或社交媒体正文中提取任何有价值的优惠、促销、空投或免费资源信息。
@@ -114,7 +105,7 @@ SYSTEM_PROMPT = """
 - 只要有促销意图或价值，即使部分字段缺失，也请尽量提取并归类，不要轻易返回 false！
 - 只有纯技术新闻、纯资讯报道、与优惠完全无关的公告才返回 {"is_valid_deal": false}。
 
-请严格输出合法的 JSON 格式：
+请严格输出合法的 JSON 格式（不要包含任何 markdown 额外的解释性文字，只输出纯 JSON）：
 {
   "is_valid_deal": true,
   "title": "活动简明名称",
@@ -154,16 +145,30 @@ def call_universal_llm(prompt_text):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt_text}
         ],
-        "temperature": 0.1,
-        "response_format": {"type": "json_object"}
+        "temperature": 0.1
     }
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=40)
-        if response.status_code == 200:
-            return json.loads(response.json()["choices"][0]["message"]["content"])
+        response = requests.post(url, headers=headers, json=payload, timeout=45)
+        if response.status_code != 200:
+            print(f"❌ CoArena API 错误 [{response.status_code}]: {response.text[:250]}", file=sys.stderr)
+            return {"is_valid_deal": False}
+        
+        res_json = response.json()
+        content = res_json["choices"][0]["message"]["content"].strip()
+        
+        # 💡 自动剥离可能存在的 markdown 代码块 (```json ... ```)
+        if content.startswith("```"):
+            lines = content.split("\n")
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            content = "\n".join(lines).strip()
+            
+        return json.loads(content)
     except Exception as e:
-        print(f"LLM 请求异常: {str(e)[:120]}", file=sys.stderr)
-    return {"is_valid_deal": False}
+        print(f"❌ LLM 请求或解析异常: {str(e)[:150]}", file=sys.stderr)
+        return {"is_valid_deal": False}
 
 def load_json(filepath):
     if not os.path.exists(filepath):
@@ -189,7 +194,6 @@ def fetch_telegram_channel_entries(channel_username):
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             messages = soup.find_all('div', class_='tgme_widget_message')
-            # 💡 深度扩大到最近 25 条消息
             for msg in messages[-25:]:
                 text_div = msg.find('div', class_='tgme_widget_message_text')
                 if not text_div:
@@ -207,8 +211,8 @@ def fetch_telegram_channel_entries(channel_username):
     return entries
 
 def main():
-    if not API_KEY or len(API_KEY) < 10:
-        print("❌ API Key 无效或为空！")
+    if not API_KEY or len(API_KEY) < 5:
+        print("❌ API Key 无效或为空！请检查 GitHub Secrets 中的 LLM_API_KEY")
         return
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -220,12 +224,12 @@ def main():
     existing_ids = {d["id"] for d in active_deals} | {d["id"] for d in archived_deals}
     new_added_count = 0
 
-    # 1. 采集 RSS 源 (💡 深度扩大到每源前 20 条)
+    # 1. 采集 RSS 源
     for src in RSS_SOURCES:
         try:
             print(f"正在检查 RSS 源: {src['name']} ...")
             feed = feedparser.parse(src["url"])
-            for entry in feed.entries[:20]:
+            for entry in feed.entries[:15]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
                 summary = clean_text(entry.get("summary", entry.get("description", "")))
@@ -251,7 +255,7 @@ def main():
                     print(f"  -> 🎉 成功捕获新羊毛: {parsed.get('title')}")
                 time.sleep(0.3)
         except Exception as e:
-            print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
+            print(f"解析源 {src['name']} 异常: {str(e)[:100]}")
 
     # 2. 采集 Telegram 公开频道
     for ch in TG_CHANNELS:
@@ -285,7 +289,7 @@ def main():
                     print(f"  -> 🎉 成功从 Telegram 捕获羊毛: {parsed.get('title')}")
                 time.sleep(0.3)
         except Exception as e:
-            print(f"抓取 Telegram 频道 @{ch} 失败: {str(e)[:100]}")
+            print(f"抓取 Telegram 频道 @{ch} 异常: {str(e)[:100]}")
 
     active_deals.sort(key=lambda x: (x.get("created_at") == today_date, x.get("value_score", 0)), reverse=True)
     save_json(ACTIVE_FILE, active_deals)
