@@ -81,40 +81,40 @@ if not MODEL:
 
 client_base_url = BASE_URL
 
+# 💡 优化后的宽松提示词：积极识别各类 VPS、空投、羊毛与优惠
 SYSTEM_PROMPT = """
-你是一个精通全球“撸羊毛”、免费资源、限时活动、空投与金融优惠的情报分析专家。
-请从原始内容中提取符合以下7大领域的真实活动：
-1. AI订阅优惠
-2. Crypto (空投、测试网、积分、交易所活动)
-3. U卡 (海外虚拟卡、实体卡、返现、开卡奖励)
-4. 海外银行 (开户奖励、存款优惠、推荐奖励)
-5. VPS及云服务 (免费服务器、云计算额度、域名)
-6. 软件与数字服务 (免费试用、终身会员、开发者福利)
-7. 其他值得关注的全球优惠活动
+你是一个精通全球“撸羊毛”、免费资源、限时活动、VPS促销、软件折扣与空投的情报分析专家。
+请从给定的文章标题、摘要或社交媒体正文中提取任何有价值的优惠、促销、空投或免费资源信息。
 
-【严格质量红线】：
-1. 绝对不要编造优惠！如无明确优惠信息返回 {"is_valid_deal": false}。
-2. 必须明确标出门槛类型（threshold_tag）：【真正免费】、【免费试用】、【需要充值】、【需要交易量】、【需要邀请】。
-3. 评估实际价值（value_score: 1-100整数；value_desc: 具体金额或权益）。
-4. 无法确认截止日期或官方链接的标注“待核实”。
+只要内容包含以下任何一种元素，即判定为有效活动 (is_valid_deal: true)：
+1. VPS / 服务器降价、促销、特价套餐、黑五优惠。
+2. AI 订阅折扣、额度赠送、限免。
+3. Crypto 积分、空投、白名单、交易所活动。
+4. U卡 / 海外银行开户奖励、返现。
+5. 软件、App、游戏限免或终身会员折扣。
+6. 其他任何免费资源、福利、礼品卡、羊毛线报。
+
+【判定规则】：
+- 只要有促销意图或价值，即使部分字段缺失，也请尽量提取并归类，不要轻易返回 false！
+- 只有纯技术新闻、纯资讯报道、与优惠完全无关的公告才返回 {"is_valid_deal": false}。
 
 请严格输出合法的 JSON 格式：
 {
   "is_valid_deal": true,
-  "title": "活动名称",
-  "category": "必须严格匹配上述7大类别之一",
-  "offer_detail": "优惠内容详细描述",
-  "value_desc": "实际价值描述",
-  "value_score": 85,
-  "threshold_tag": "真正免费 | 免费试用 | 需要充值 | 需要交易量 | 需要邀请",
-  "requirements": "参与条件与隐藏门槛",
-  "region": "适用国家或地区",
-  "start_date": "YYYY-MM-DD 或 待核实",
-  "end_date": "YYYY-MM-DD 或 长期有效 或 待核实",
-  "steps": ["步骤1", "步骤2"],
+  "title": "活动简明名称",
+  "category": "必须严格匹配以下7大类别之一: 【AI订阅优惠】、【Crypto】、【U卡】、【海外银行】、【VPS及云服务】、【软件与数字服务】、【其他优惠】",
+  "offer_detail": "优惠内容的具体描述（如配置、价格、折扣力度）",
+  "value_desc": "实际价值或优惠力度（例如：$3.5/月、送50积分、限时免费）",
+  "value_score": 75,
+  "threshold_tag": "真正免费 | 免费试用 | 需要充值 | 需要交易量 | 需要邀请 | 限时促销",
+  "requirements": "参与条件或说明",
+  "region": "全球或适用地区",
+  "start_date": "待核实",
+  "end_date": "长期有效",
+  "steps": ["查看活动链接", "按页面指引参与"],
   "official_url": "原始链接",
   "source": "来源名称",
-  "risk_warning": "风险提示"
+  "risk_warning": "请自行评估风险"
 }
 """
 
@@ -208,7 +208,7 @@ def main():
         try:
             print(f"正在检查 RSS 源: {src['name']} ...")
             feed = feedparser.parse(src["url"])
-            for entry in feed.entries[:5]: # 先测前5条
+            for entry in feed.entries[:5]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
                 summary = clean_text(entry.get("summary", entry.get("description", "")))
@@ -217,13 +217,10 @@ def main():
                     continue
                 deal_id = generate_id(title, link)
                 if deal_id in existing_ids:
-                    print(f"  [已存在跳过] {title[:30]}")
                     continue
 
-                print(f"  [发送给大模型分析] {title[:30]}")
                 prompt_content = f"来源: {src['name']}\n标题: {title}\n链接: {link}\n摘要: {summary[:1500]}"
                 parsed = call_universal_llm(prompt_content)
-                print(f"  [大模型返回结果] valid={parsed.get('is_valid_deal')}")
                 
                 if parsed.get("is_valid_deal"):
                     parsed["id"] = deal_id
@@ -244,20 +241,17 @@ def main():
         try:
             print(f"正在检查 Telegram 频道: @{ch} ...")
             tg_entries = fetch_telegram_channel_entries(ch)
-            for entry in tg_entries[:5]: # 先测前5条
+            for entry in tg_entries[:5]:
                 title = entry["title"]
                 link = entry["link"]
                 summary = entry["summary"]
                 
                 deal_id = generate_id(title, link)
                 if deal_id in existing_ids:
-                    print(f"  [已存在跳过] {title[:30]}")
                     continue
 
-                print(f"  [发送给大模型分析] {title[:30]}")
                 prompt_content = f"Telegram Channel @{ch}\n标题: {title}\n链接: {link}\n正文: {summary[:1500]}"
                 parsed = call_universal_llm(prompt_content)
-                print(f"  [大模型返回结果] valid={parsed.get('is_valid_deal')}")
                 
                 if parsed.get("is_valid_deal"):
                     parsed["id"] = deal_id
