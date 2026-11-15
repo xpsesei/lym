@@ -15,27 +15,27 @@ from datetime import datetime, timezone
 
 # 🌐 全网超级海量 RSS 源
 RSS_SOURCES = [
-    {"name": "OpenAI News", "url": "[https://openai.com/news/rss.xml](https://openai.com/news/rss.xml)", "default_cat": "AI订阅优惠"},
-    {"name": "Anthropic News", "url": "[https://www.anthropic.com/news/rss.xml](https://www.anthropic.com/news/rss.xml)", "default_cat": "AI订阅优惠"},
-    {"name": "GitHub Blog", "url": "[https://github.blog/feed/](https://github.blog/feed/)", "default_cat": "VPS及云服务"},
-    {"name": "Cloudflare Blog", "url": "[https://blog.cloudflare.com/rss/](https://blog.cloudflare.com/rss/)", "default_cat": "VPS及云服务"},
-    {"name": "Product Hunt", "url": "[https://www.producthunt.com/feed](https://www.producthunt.com/feed)", "default_cat": "软件与数字服务"},
-    {"name": "LowEndBox (VPS Deals)", "url": "[https://lowendbox.com/feed/](https://lowendbox.com/feed/)", "default_cat": "VPS及云服务"},
-    {"name": "WHT (Web Hosting Talk)", "url": "[https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss](https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss)", "default_cat": "VPS及云服务"},
-    {"name": "Vpsmm (VPS优惠)", "url": "[https://www.vpsmm.com/feed](https://www.vpsmm.com/feed)", "default_cat": "VPS及云服务"},
-    {"name": "NodeSeek Latest", "url": "[https://www.nodeseek.com/rss](https://www.nodeseek.com/rss)", "default_cat": "VPS及云服务"},
-    {"name": "Binance Announcement", "url": "[https://www.binance.com/en/support/announcement/rss](https://www.binance.com/en/support/announcement/rss)", "default_cat": "Crypto"},
-    {"name": "CoinDesk News", "url": "[https://www.coindesk.com/arc/outboundfeeds/rss/](https://www.coindesk.com/arc/outboundfeeds/rss/)", "default_cat": "Crypto"},
-    {"name": "Decrypt Co", "url": "[https://decrypt.co/feed](https://decrypt.co/feed)", "default_cat": "Crypto"},
-    {"name": "CoinTelegraph", "url": "[https://cointelegraph.com/rss](https://cointelegraph.com/rss)", "default_cat": "Crypto"},
-    {"name": "Blockworks", "url": "[https://blockworks.co/feed](https://blockworks.co/feed)", "default_cat": "Crypto"},
-    {"name": "Reddit Freebies", "url": "[https://www.reddit.com/r/freebies/.rss](https://www.reddit.com/r/freebies/.rss)", "default_cat": "软件与数字服务"},
-    {"name": "Reddit Deals", "url": "[https://www.reddit.com/r/deals/.rss](https://www.reddit.com/r/deals/.rss)", "default_cat": "其他优惠"},
-    {"name": "Reddit AppHookUp", "url": "[https://www.reddit.com/r/AppHookUp/.rss](https://www.reddit.com/r/AppHookUp/.rss)", "default_cat": "软件与数字服务"},
-    {"name": "Reddit FreeGameFindings", "url": "[https://www.reddit.com/r/freeGameFindings/.rss](https://www.reddit.com/r/freeGameFindings/.rss)", "default_cat": "软件与数字服务"},
-    {"name": "BetaList", "url": "[https://betalist.com/feed](https://betalist.com/feed)", "default_cat": "软件与数字服务"},
-    {"name": "OzBargain", "url": "[https://www.ozbargain.com.au/feed](https://www.ozbargain.com.au/feed)", "default_cat": "其他优惠"},
-    {"name": "Hacker News Deals", "url": "[https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway](https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway)", "default_cat": "其他优惠"}
+    {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
+    {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
+    {"name": "GitHub Blog", "url": "https://github.blog/feed/", "default_cat": "VPS及云服务"},
+    {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
+    {"name": "Product Hunt", "url": "https://www.producthunt.com/feed", "default_cat": "软件与数字服务"},
+    {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
+    {"name": "WHT (Web Hosting Talk)", "url": "https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss", "default_cat": "VPS及云服务"},
+    {"name": "Vpsmm (VPS优惠)", "url": "https://www.vpsmm.com/feed", "default_cat": "VPS及云服务"},
+    {"name": "NodeSeek Latest", "url": "https://www.nodeseek.com/rss", "default_cat": "VPS及云服务"},
+    {"name": "Binance Announcement", "url": "https://www.binance.com/en/support/announcement/rss", "default_cat": "Crypto"},
+    {"name": "CoinDesk News", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/", "default_cat": "Crypto"},
+    {"name": "Decrypt Co", "url": "https://decrypt.co/feed", "default_cat": "Crypto"},
+    {"name": "CoinTelegraph", "url": "https://cointelegraph.com/rss", "default_cat": "Crypto"},
+    {"name": "Blockworks", "url": "https://blockworks.co/feed", "default_cat": "Crypto"},
+    {"name": "Reddit Freebies", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
+    {"name": "Reddit Deals", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"},
+    {"name": "Reddit AppHookUp", "url": "https://www.reddit.com/r/AppHookUp/.rss", "default_cat": "软件与数字服务"},
+    {"name": "Reddit FreeGameFindings", "url": "https://www.reddit.com/r/freeGameFindings/.rss", "default_cat": "软件与数字服务"},
+    {"name": "BetaList", "url": "https://betalist.com/feed", "default_cat": "软件与数字服务"},
+    {"name": "OzBargain", "url": "https://www.ozbargain.com.au/feed", "default_cat": "其他优惠"},
+    {"name": "Hacker News Deals", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"}
 ]
 
 # 📱 超级海量 Telegram 频道源
@@ -61,31 +61,22 @@ TG_CHANNELS = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
+# 🛡️ 强力清洗并校对环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
 for sep in [' ', '\n', '\r', '\t', 'LLM_']:
     if sep in raw_api_key:
         raw_api_key = raw_api_key.split(sep)[0]
 API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
 
-raw_base_url = os.environ.get("LLM_BASE_URL", "").strip()
-if "https://" in raw_base_url:
-    start_idx = raw_base_url.find("https://")
-    raw_base_url = raw_base_url[start_idx:]
-    for sep in [' ', '\n', '\r', '\t', 'LLM_']:
-        if sep in raw_base_url:
-            raw_base_url = raw_base_url.split(sep)[0]
-BASE_URL = "".join(c for c in raw_base_url if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'").rstrip('/')
+raw_base_url = os.environ.get("LLM_BASE_URL", "").strip().strip('"').strip("'")
+if not raw_base_url or "coarena" in raw_base_url or not raw_base_url.startswith("http"):
+    # 💡 强制兜底：如果没配或配错，直接锁定 CoArena 正确地址
+    BASE_URL = "https://coarena.ai/api/v1"
+else:
+    BASE_URL = raw_base_url.rstrip('/')
 
-raw_model = os.environ.get("LLM_MODEL", "").strip()
-for sep in [' ', '\n', '\r', '\t', 'LLM_']:
-    if sep in raw_model:
-        raw_model = raw_model.split(sep)[0]
-MODEL = "".join(c for c in raw_model if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
-
-if not BASE_URL or not BASE_URL.startswith("http"):
-    BASE_URL = "[https://coarena.ai/api/v1](https://coarena.ai/api/v1)"
-if not MODEL:
-    MODEL = "deepseek-chat"
+raw_model = os.environ.get("LLM_MODEL", "").strip().strip('"').strip("'")
+MODEL = raw_model if raw_model else "deepseek-chat"
 
 client_base_url = BASE_URL
 
@@ -150,13 +141,12 @@ def call_universal_llm(prompt_text):
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=45)
         if response.status_code != 200:
-            print(f"❌ CoArena API 错误 [{response.status_code}]: {response.text[:250]}", file=sys.stderr)
+            print(f"❌ API 错误 [{response.status_code} at {url}]: {response.text[:200]}", file=sys.stderr)
             return {"is_valid_deal": False}
         
         res_json = response.json()
         content = res_json["choices"][0]["message"]["content"].strip()
         
-        # 💡 自动剥离可能存在的 markdown 代码块 (```json ... ```)
         if content.startswith("```"):
             lines = content.split("\n")
             if lines[0].startswith("```"):
@@ -167,7 +157,7 @@ def call_universal_llm(prompt_text):
             
         return json.loads(content)
     except Exception as e:
-        print(f"❌ LLM 请求或解析异常: {str(e)[:150]}", file=sys.stderr)
+        print(f"❌ 请求异常 [URL: {url}]: {str(e)[:120]}", file=sys.stderr)
         return {"is_valid_deal": False}
 
 def load_json(filepath):
@@ -187,7 +177,7 @@ def generate_id(title, url):
 
 def fetch_telegram_channel_entries(channel_username):
     entries = []
-    url = f"https://t.me/s/{channel_username}"
+    url = f"[https://t.me/s/](https://t.me/s/){channel_username}"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     try:
         response = requests.get(url, headers=headers, timeout=20)
@@ -202,7 +192,7 @@ def fetch_telegram_channel_entries(channel_username):
                 if not content:
                     continue
                 link_a = msg.find('a', class_='tgme_widget_message_date')
-                post_link = link_a['href'] if link_a and link_a.has_attr('href') else f"https://t.me/{channel_username}"
+                post_link = link_a['href'] if link_a and link_a.has_attr('href') else f"[https://t.me/](https://t.me/){channel_username}"
                 first_line = content.split('\n')[0]
                 title = first_line[:50] if len(first_line) > 3 else f"Telegram 推送 (@{channel_username})"
                 entries.append({"title": title, "link": post_link, "summary": content})
@@ -214,6 +204,8 @@ def main():
     if not API_KEY or len(API_KEY) < 5:
         print("❌ API Key 无效或为空！请检查 GitHub Secrets 中的 LLM_API_KEY")
         return
+
+    print(f"🔗 当前使用的 LLM API 地址: {client_base_url}")
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
