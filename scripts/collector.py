@@ -61,7 +61,7 @@ TG_CHANNELS = [
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 强力清洗并校对环境变量
+# 🛡️ 强力清洗环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
 for sep in [' ', '\n', '\r', '\t', 'LLM_']:
     if sep in raw_api_key:
@@ -73,10 +73,6 @@ if not raw_base_url or "coarena" in raw_base_url or not raw_base_url.startswith(
     BASE_URL = "https://coarena.ai/api/v1"
 else:
     BASE_URL = raw_base_url.rstrip('/')
-
-raw_model = os.environ.get("LLM_MODEL", "").strip().strip('"').strip("'")
-# 💡 适配 CoArena 平台常用的模型名称（如未设置则默认用 deepseek/deepseek-chat）
-MODEL = raw_model if raw_model else "deepseek/deepseek-chat"
 
 client_base_url = BASE_URL
 
@@ -116,6 +112,50 @@ SYSTEM_PROMPT = """
 }
 """
 
+def discover_working_model():
+    """自动探测 API 平台支持的可用模型，支持任何 AI 模型无缝切换"""
+    user_model = os.environ.get("LLM_MODEL", "").strip().strip('"').strip("'")
+    if user_model:
+        print(f"📌 使用用户手动指定的模型: {user_model}")
+        return user_model
+
+    models_url = f"{client_base_url}/models"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    try:
+        print(正在自动向网关请求可用模型列表: {models_url} ...)
+        res = requests.get(models_url, headers=headers, timeout=15)
+        if res.status_code == 200:
+            data = res.json()
+            model_list = []
+            items = data.get("data", data.get("models", [])) if isinstance(data, dict) else data
+            for item in items:
+                if isinstance(item, dict) and "id" in item:
+                    model_list.append(item["id"])
+                elif isinstance(item, str):
+                    model_list.append(item)
+            
+            if model_list:
+                print(f"🤖 成功发现可用模型列表: {model_list[:8]} ...")
+                # 优先匹配常用的高性价比/聊天模型
+                for keyword in ["chat", "gpt", "deepseek", "claude", "flash", "haiku", "sonnet"]:
+                    for m in model_list:
+                        if keyword in m.lower():
+                            print(f"🎯 自动智能选中模型: {m}")
+                            return m
+                # 实在没有就选第一个
+                print(f"🎯 自动选中首个可用模型: {model_list[0]}")
+                return model_list[0]
+    except Exception as e:
+        print(f"⚠️ 自动获取模型列表异常: {e}")
+
+    # 兜底常用模型
+    fallbacks = ["deepseek-chat", "deepseek/deepseek-chat", "gpt-4o-mini", "gpt-3.5-turbo", "claude-3-haiku"]
+    print(f"🔄 启动默认备选模型: {fallbacks[0]}")
+    return fallbacks[0]
+
+# 全局动态解析模型
+SELECTED_MODEL = discover_working_model()
+
 def clean_text(text):
     if not text:
         return ""
@@ -131,7 +171,7 @@ def call_universal_llm(prompt_text):
     url = f"{client_base_url}/chat/completions"
     headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": MODEL,
+        "model": SELECTED_MODEL,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt_text}
@@ -141,7 +181,7 @@ def call_universal_llm(prompt_text):
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=45)
         if response.status_code != 200:
-            print(f"❌ API 错误 [{response.status_code} at {url} (Model: {MODEL})]: {response.text[:250]}", file=sys.stderr)
+            print(f"❌ API 错误 [{response.status_code} at {url} (Model: {SELECTED_MODEL})]: {response.text[:250]}", file=sys.stderr)
             return {"is_valid_deal": False}
         
         res_json = response.json()
@@ -206,7 +246,7 @@ def main():
         return
 
     print(f"🔗 当前 API 地址: {client_base_url}")
-    print(f"🤖 当前使用模型: {MODEL}")
+    print(f"🤖 最终锁定调用模型: {SELECTED_MODEL}")
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
