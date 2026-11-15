@@ -13,7 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
-# 🌐 1. 全网海量 RSS 源（覆盖 VPS、云服务、Crypto、软件福利、综合折扣）
+# 🌐 全网海量 RSS 源（全面覆盖 VPS、U卡/银行、AI、Crypto、免费资源、开发者福利）
 RSS_SOURCES = [
     # --- AI 与开发者技术 ---
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
@@ -28,30 +28,33 @@ RSS_SOURCES = [
     {"name": "Vpsmm (VPS优惠)", "url": "https://www.vpsmm.com/feed", "default_cat": "VPS及云服务"},
     {"name": "NodeSeek Latest", "url": "https://www.nodeseek.com/rss", "default_cat": "VPS及云服务"},
 
-    # --- Crypto 与空投源 ---
+    # --- Crypto、空投与U卡/海外银行资讯源 ---
     {"name": "Binance Announcement", "url": "https://www.binance.com/en/support/announcement/rss", "default_cat": "Crypto"},
     {"name": "CoinDesk News", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/", "default_cat": "Crypto"},
     {"name": "Decrypt Co", "url": "https://decrypt.co/feed", "default_cat": "Crypto"},
 
-    # --- 软件、限免与综合羊毛源 ---
-    {"name": "Reddit Freebies", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
-    {"name": "Reddit Deals", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"},
-    {"name": "Reddit AppHookUp", "url": "https://www.reddit.com/r/AppHookUp/.rss", "default_cat": "软件与数字服务"},
-    {"name": "Reddit FreeGameFindings", "url": "https://www.reddit.com/r/freeGameFindings/.rss", "default_cat": "软件与数字服务"},
+    # --- 软件、限免、绝对免费资源与综合羊毛源 ---
+    {"name": "Reddit Freebies (绝对免费)", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
+    {"name": "Reddit Deals (综合折扣)", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"},
+    {"name": "Reddit AppHookUp (限免App)", "url": "https://www.reddit.com/r/AppHookUp/.rss", "default_cat": "软件与数字服务"},
+    {"name": "Reddit FreeGameFindings (免费游戏)", "url": "https://www.reddit.com/r/freeGameFindings/.rss", "default_cat": "软件与数字服务"},
     {"name": "BetaList (Startups)", "url": "https://betalist.com/feed", "default_cat": "软件与数字服务"},
     {"name": "OzBargain (Global Tech Deals)", "url": "https://www.ozbargain.com.au/feed", "default_cat": "其他优惠"},
     {"name": "Hacker News (Free/Deals)", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"}
 ]
 
-# 📱 2. 海量高质量公开 Telegram 频道源（使用标准的 # 作为注释）
+# 📱 海量高质量公开 Telegram 频道源（精准覆盖 U卡、海外银行、VPS特惠、空投、免费资源）
 TG_CHANNELS = [
-    "ahmivaults",        # 你指定的频道
-    "vps_deals",         # 全球 VPS 优惠推送
+    "ahmivaults",        # 你的核心源
+    "vps_deals",         # 全球 VPS 优惠
     "freevps",           # 免费与特价云服务器
     "airdropinspect",    # 热门空投监测
     "CryptoAirdrops",    # 空投线报
     "Ucard_news",        # U卡与虚拟卡资讯
-    "DealHunt"           # 全球数码与软件折扣
+    "DealHunt",          # 全球数码与软件折扣
+    "bank_accounts_deals", # 补充：海外银行与开户奖励
+    "freebies_tg",       # 补充：全球免费资源线报
+    "crypto_airdrops_free" # 补充：零撸空投
 ]
 
 ACTIVE_FILE = "data/active_deals.json"
@@ -225,7 +228,7 @@ def main():
     existing_ids = {d["id"] for d in active_deals} | {d["id"] for d in archived_deals}
     new_added_count = 0
 
-    # 1. 采集所有海量 RSS 源
+    # 1. 采集 RSS 源
     for src in RSS_SOURCES:
         try:
             print(f"正在抓取 RSS 源: {src['name']} ...")
@@ -258,7 +261,7 @@ def main():
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
-    # 2. 采集所有海量 Telegram 频道
+    # 2. 采集 Telegram 公开频道
     for ch in TG_CHANNELS:
         try:
             print(f"正在抓取 Telegram 公开频道: @{ch} ...")
@@ -272,7 +275,7 @@ def main():
                 if deal_id in existing_ids:
                     continue
 
-                prompt_content = f"来源: Telegram Channel @{ch}\n标题: {title}\n链接: {link}\n正文: {summary[:1500]}"
+                prompt_content = f"Telegram Channel @{ch}\n标题: {title}\n链接: {link}\n正文: {summary[:1500]}"
                 parsed = call_universal_llm(prompt_content)
                 
                 if parsed.get("is_valid_deal"):
@@ -295,7 +298,7 @@ def main():
     active_deals.sort(key=lambda x: (x.get("created_at") == today_date, x.get("value_score", 0)), reverse=True)
     save_json(ACTIVE_FILE, active_deals)
     save_json(ARCHIVE_FILE, archived_deals[:500])
-    print(f"采集完成！本次新增: {new_added_count} 条，总计有效: {len(active_deals)} 条")
+    print(f"采集完成！本次新增: {new_added_count} 条总计有效: {len(active_deals)} 条")
 
 if __name__ == "__main__":
     main()
