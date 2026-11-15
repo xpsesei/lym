@@ -13,22 +13,30 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
-# 🌐 全网超级海量 RSS 源
+# 🌐 1. 全网超级海量 RSS 源矩阵（覆盖 VPS、U卡、银行、Crypto、AI、免费资源、开发者限免）
 RSS_SOURCES = [
+    # --- AI 与开发者技术 ---
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "GitHub Blog", "url": "https://github.blog/feed/", "default_cat": "VPS及云服务"},
     {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
     {"name": "Product Hunt", "url": "https://www.producthunt.com/feed", "default_cat": "软件与数字服务"},
+    
+    # --- VPS 与服务器特惠源 ---
     {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
-    {"name": "WHT (Web Hosting Talk)", "url": "https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss", "default_cat": "VPS及云服务"},
+    {"name": "WHT (Web Hosting Talk)", "url": "https://www.webhostingtalk.com/syndication.php?limit=30&forma=rss", "default_cat": "VPS及云服务"},
     {"name": "Vpsmm (VPS优惠)", "url": "https://www.vpsmm.com/feed", "default_cat": "VPS及云服务"},
     {"name": "NodeSeek Latest", "url": "https://www.nodeseek.com/rss", "default_cat": "VPS及云服务"},
+    {"name": "LET Offers", "url": "https://lowendtalk.com/rss.by/discussions", "default_cat": "VPS及云服务"},
+
+    # --- Crypto 与空投源 ---
     {"name": "Binance Announcement", "url": "https://www.binance.com/en/support/announcement/rss", "default_cat": "Crypto"},
     {"name": "CoinDesk News", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/", "default_cat": "Crypto"},
     {"name": "Decrypt Co", "url": "https://decrypt.co/feed", "default_cat": "Crypto"},
     {"name": "CoinTelegraph", "url": "https://cointelegraph.com/rss", "default_cat": "Crypto"},
     {"name": "Blockworks", "url": "https://blockworks.co/feed", "default_cat": "Crypto"},
+
+    # --- 软件、限免、绝对免费资源与综合折扣源 ---
     {"name": "Reddit Freebies", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
     {"name": "Reddit Deals", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"},
     {"name": "Reddit AppHookUp", "url": "https://www.reddit.com/r/AppHookUp/.rss", "default_cat": "软件与数字服务"},
@@ -38,43 +46,55 @@ RSS_SOURCES = [
     {"name": "Hacker News Deals", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"}
 ]
 
-# 📱 超级海量 Telegram 频道源
+# 📱 2. 超级海量公开 Telegram 频道源矩阵（全网覆盖 U卡、海外银行、VPS特惠、空投、免费资源）
 TG_CHANNELS = [
-    "ahmivaults",
-    "vps_deals",
-    "freevps",
-    "airdropinspect",
-    "CryptoAirdrops",
-    "Ucard_news",
-    "DealHunt",
-    "bank_accounts_deals",
-    "freebies_tg",
-    "crypto_airdrops_free",
-    "vps_chat",
-    "free_vps",
-    "airdrop_alert",
-    "virtual_cards",
-    "tech_deals",
-    "giveaways_hub"
+    "ahmivaults",          # 核心指定源
+    "vps_deals",           # 全球 VPS 优惠
+    "freevps",             # 免费与特价云服务器
+    "airdropinspect",      # 热门空投监测
+    "CryptoAirdrops",      # 空投线报
+    "Ucard_news",          # U卡与虚拟卡资讯
+    "DealHunt",            # 全球数码与软件折扣
+    "bank_accounts_deals", # 海外银行与开户奖励
+    "freebies_tg",         # 全球免费资源线报
+    "crypto_airdrops_free",# 零撸空投
+    "vps_chat",            # VPS 交流与特价通知
+    "free_vps",            # 免费云服务器
+    "airdrop_alert",       # 空投提醒
+    "virtual_cards",       # 虚拟卡与U卡福利
+    "tech_deals",          # 科技数码折扣
+    "giveaways_hub",       # 全球福利抽奖与羊毛
+    "carding_alerts",      # 虚拟卡与金融优惠
+    "vps_offers",          # 优质 VPS 促销
+    "airdrop_hunters",     # 空投猎人
+    "free_stuff_hub"       # 免费资源分享
 ]
 
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
-# 🛡️ 强力清洗环境变量
-raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
-for sep in [' ', '\n', '\r', '\t', 'LLM_']:
-    if sep in raw_api_key:
-        raw_api_key = raw_api_key.split(sep)[0]
-API_KEY = "".join(c for c in raw_api_key if c.isprintable() and c not in (' ', '\t', '\n', '\r')).strip('"').strip("'")
-
-raw_base_url = os.environ.get("LLM_BASE_URL", "").strip().strip('"').strip("'")
-if not raw_base_url or "coarena" in raw_base_url or not raw_base_url.startswith("http"):
-    BASE_URL = "https://coarena.ai/api/v1"
-else:
-    BASE_URL = raw_base_url.rstrip('/')
-
-client_base_url = BASE_URL
+# 🛡️ 多 AI 轮询池配置（支持无限扩展备用 AI 平台和密钥）
+# 依次读取 GitHub Secrets 中的 LLM_API_KEY, LLM_API_KEY_2, LLM_API_KEY_3 等
+AI_PROVIDERS = [
+    {
+        "name": "主用 AI 平台 (CoArena / 默认)",
+        "base_url": os.environ.get("LLM_BASE_URL", "https://coarena.ai/api/v1"),
+        "api_key": os.environ.get("LLM_API_KEY", "").strip().strip('"').strip("'"),
+        "model": os.environ.get("LLM_MODEL", "deepseek-chat")
+    },
+    {
+        "name": "备用 AI 平台 2",
+        "base_url": os.environ.get("LLM_BASE_URL_2", "https://coarena.ai/api/v1"),
+        "api_key": os.environ.get("LLM_API_KEY_2", "").strip().strip('"').strip("'"),
+        "model": os.environ.get("LLM_MODEL_2", "gpt-4o-mini")
+    },
+    {
+        "name": "备用 AI 平台 3",
+        "base_url": os.environ.get("LLM_BASE_URL_3", "https://coarena.ai/api/v1"),
+        "api_key": os.environ.get("LLM_API_KEY_3", "").strip().strip('"').strip("'"),
+        "model": os.environ.get("LLM_MODEL_3", "claude-3-haiku")
+    }
+]
 
 SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、VPS促销、软件折扣与空投的情报分析专家。
@@ -112,47 +132,6 @@ SYSTEM_PROMPT = """
 }
 """
 
-def discover_working_model():
-    """自动探测 API 平台支持的可用模型，支持任何 AI 模型无缝切换"""
-    user_model = os.environ.get("LLM_MODEL", "").strip().strip('"').strip("'")
-    if user_model:
-        print(f"📌 使用用户手动指定的模型: {user_model}")
-        return user_model
-
-    models_url = f"{client_base_url}/models"
-    headers = {"Authorization": f"Bearer {API_KEY}"}
-    try:
-        print(f"正在自动向网关请求可用模型列表: {models_url} ...")
-        res = requests.get(models_url, headers=headers, timeout=15)
-        if res.status_code == 200:
-            data = res.json()
-            model_list = []
-            items = data.get("data", data.get("models", [])) if isinstance(data, dict) else data
-            for item in items:
-                if isinstance(item, dict) and "id" in item:
-                    model_list.append(item["id"])
-                elif isinstance(item, str):
-                    model_list.append(item)
-            
-            if model_list:
-                print(f"🤖 成功发现可用模型列表: {model_list[:8]} ...")
-                for keyword in ["chat", "gpt", "deepseek", "claude", "flash", "haiku", "sonnet"]:
-                    for m in model_list:
-                        if keyword in m.lower():
-                            print(f"🎯 自动智能选中模型: {m}")
-                            return m
-                print(f"🎯 自动选中首个可用模型: {model_list[0]}")
-                return model_list[0]
-    except Exception as e:
-        print(f"⚠️ 自动获取模型列表异常: {e}")
-
-    fallbacks = ["deepseek-chat", "deepseek/deepseek-chat", "gpt-4o-mini", "gpt-3.5-turbo", "claude-3-haiku"]
-    print(f"🔄 启动默认备选模型: {fallbacks[0]}")
-    return fallbacks[0]
-
-# 全局动态解析模型
-SELECTED_MODEL = discover_working_model()
-
 def clean_text(text):
     if not text:
         return ""
@@ -165,37 +144,53 @@ def clean_text(text):
     return text.strip()
 
 def call_universal_llm(prompt_text):
-    url = f"{client_base_url}/chat/completions"
-    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
-    payload = {
-        "model": SELECTED_MODEL,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt_text}
-        ],
-        "temperature": 0.1
-    }
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=45)
-        if response.status_code != 200:
-            print(f"❌ API 错误 [{response.status_code} at {url} (Model: {SELECTED_MODEL})]: {response.text[:250]}", file=sys.stderr)
-            return {"is_valid_deal": False}
+    """多 AI 轮询池机制：依次尝试所有配置的 AI 平台，直到某一个成功返回"""
+    for provider in AI_PROVIDERS:
+        api_key = provider["api_key"]
+        base_url = provider["base_url"]
+        model = provider["model"]
         
-        res_json = response.json()
-        content = res_json["choices"][0]["message"]["content"].strip()
-        
-        if content.startswith("```"):
-            lines = content.split("\n")
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            content = "\n".join(lines).strip()
+        # 如果某个备用配置没填 Key，自动跳过
+        if not api_key or len(api_key) < 5:
+            continue
             
-        return json.loads(content)
-    except Exception as e:
-        print(f"❌ 请求异常 [URL: {url}]: {str(e)[:120]}", file=sys.stderr)
-        return {"is_valid_deal": False}
+        url = f"{base_url.rstrip('/')}/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt_text}
+            ],
+            "temperature": 0.1
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=35)
+            if response.status_code == 200:
+                res_json = response.json()
+                content = res_json["choices"][0]["message"]["content"].strip()
+                
+                if content.startswith("```"):
+                    lines = content.split("\n")
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines and lines[-1].startswith("```"):
+                        lines = lines[:-1]
+                    content = "\n".join(lines).strip()
+                    
+                parsed = json.loads(content)
+                if isinstance(parsed, dict):
+                    return parsed
+            else:
+                print(f"⚠️ AI 平台 [{provider['name']}] 返回状态码 {response.status_code}，自动切换至下一个 AI...", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠️ AI 平台 [{provider['name']}] 请求异常: {str(e)[:80]}，自动切换至下一个 AI...", file=sys.stderr)
+            
+        time.sleep(0.2)
+
+    print("❌ 所有配置的 AI 平台与备用模型全部尝试失败！", file=sys.stderr)
+    return {"is_valid_deal": False}
 
 def load_json(filepath):
     if not os.path.exists(filepath):
@@ -238,12 +233,13 @@ def fetch_telegram_channel_entries(channel_username):
     return entries
 
 def main():
-    if not API_KEY or len(API_KEY) < 5:
-        print("❌ API Key 无效或为空！请检查 GitHub Secrets 中的 LLM_API_KEY")
+    active_keys_count = sum(1 for p in AI_PROVIDERS if p["api_key"] and len(p["api_key"]) >= 5)
+    if active_keys_count == 0:
+        print("❌ 未检测到任何有效的 LLM_API_KEY！请在 GitHub Secrets 中配置。")
         return
 
-    print(f"🔗 当前 API 地址: {client_base_url}")
-    print(f"🤖 最终锁定调用模型: {SELECTED_MODEL}")
+    print(f"🚀 已加载采集源: {len(RSS_SOURCES)} 个 RSS 源, {len(TG_CHANNELS)} 个 Telegram 频道")
+    print(f"🤖 当前已激活的多 AI 轮询池数量: {active_keys_count} 个")
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
