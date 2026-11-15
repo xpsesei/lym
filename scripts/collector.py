@@ -122,7 +122,7 @@ def discover_working_model():
     models_url = f"{client_base_url}/models"
     headers = {"Authorization": f"Bearer {API_KEY}"}
     try:
-        print(正在自动向网关请求可用模型列表: {models_url} ...)
+        print(f"正在自动向网关请求可用模型列表: {models_url} ...")
         res = requests.get(models_url, headers=headers, timeout=15)
         if res.status_code == 200:
             data = res.json()
@@ -136,19 +136,16 @@ def discover_working_model():
             
             if model_list:
                 print(f"🤖 成功发现可用模型列表: {model_list[:8]} ...")
-                # 优先匹配常用的高性价比/聊天模型
                 for keyword in ["chat", "gpt", "deepseek", "claude", "flash", "haiku", "sonnet"]:
                     for m in model_list:
                         if keyword in m.lower():
                             print(f"🎯 自动智能选中模型: {m}")
                             return m
-                # 实在没有就选第一个
                 print(f"🎯 自动选中首个可用模型: {model_list[0]}")
                 return model_list[0]
     except Exception as e:
         print(f"⚠️ 自动获取模型列表异常: {e}")
 
-    # 兜底常用模型
     fallbacks = ["deepseek-chat", "deepseek/deepseek-chat", "gpt-4o-mini", "gpt-3.5-turbo", "claude-3-haiku"]
     print(f"🔄 启动默认备选模型: {fallbacks[0]}")
     return fallbacks[0]
