@@ -13,20 +13,29 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
-# 🌐 全网海量 RSS 源
+# 🌐 全网超级海量 RSS 源（覆盖 VPS、云服务、Crypto、U卡、银行、免费资源、开发者限免）
 RSS_SOURCES = [
+    # --- AI 与开发者技术 ---
     {"name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "Anthropic News", "url": "https://www.anthropic.com/news/rss.xml", "default_cat": "AI订阅优惠"},
     {"name": "GitHub Blog", "url": "https://github.blog/feed/", "default_cat": "VPS及云服务"},
     {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/rss/", "default_cat": "VPS及云服务"},
     {"name": "Product Hunt", "url": "https://www.producthunt.com/feed", "default_cat": "软件与数字服务"},
+    
+    # --- VPS 与服务器特惠源 (海量增加) ---
     {"name": "LowEndBox (VPS Deals)", "url": "https://lowendbox.com/feed/", "default_cat": "VPS及云服务"},
-    {"name": "WHT (Web Hosting Talk Deals)", "url": "https://www.webhostingtalk.com/syndication.php?limit=15&forma=rss", "default_cat": "VPS及云服务"},
+    {"name": "WHT (Web Hosting Talk Deals)", "url": "https://www.webhostingtalk.com/syndication.php?limit=25&forma=rss", "default_cat": "VPS及云服务"},
     {"name": "Vpsmm (VPS优惠)", "url": "https://www.vpsmm.com/feed", "default_cat": "VPS及云服务"},
     {"name": "NodeSeek Latest", "url": "https://www.nodeseek.com/rss", "default_cat": "VPS及云服务"},
+
+    # --- Crypto 与空投资讯源 ---
     {"name": "Binance Announcement", "url": "https://www.binance.com/en/support/announcement/rss", "default_cat": "Crypto"},
     {"name": "CoinDesk News", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/", "default_cat": "Crypto"},
     {"name": "Decrypt Co", "url": "https://decrypt.co/feed", "default_cat": "Crypto"},
+    {"name": "CoinTelegraph RSS", "url": "https://cointelegraph.com/rss", "default_cat": "Crypto"},
+    {"name": "Blockworks RSS", "url": "https://blockworks.co/feed", "default_cat": "Crypto"},
+
+    # --- 软件、限免、绝对免费资源与综合折扣源 ---
     {"name": "Reddit Freebies", "url": "https://www.reddit.com/r/freebies/.rss", "default_cat": "软件与数字服务"},
     {"name": "Reddit Deals", "url": "https://www.reddit.com/r/deals/.rss", "default_cat": "其他优惠"},
     {"name": "Reddit AppHookUp", "url": "https://www.reddit.com/r/AppHookUp/.rss", "default_cat": "软件与数字服务"},
@@ -36,23 +45,30 @@ RSS_SOURCES = [
     {"name": "Hacker News (Free/Deals)", "url": "https://hnrss.org/newest?q=free+OR+credit+OR+airdrop+OR+bonus+OR+giveaway", "default_cat": "其他优惠"}
 ]
 
-# 📱 Telegram 公开频道
+# 📱 超级海量公开 Telegram 频道源（全网覆盖 U卡、海外银行、VPS特惠、空投、免费资源、科技数码羊毛）
 TG_CHANNELS = [
-    "ahmivaults",
-    "vps_deals",
-    "freevps",
-    "airdropinspect",
-    "CryptoAirdrops",
-    "Ucard_news",
-    "DealHunt",
-    "bank_accounts_deals",
-    "freebies_tg",
-    "crypto_airdrops_free"
+    "ahmivaults",          # 核心指定频道
+    "vps_deals",           # 全球 VPS 优惠
+    "freevps",             # 免费与特价云服务器
+    "airdropinspect",      # 热门空投监测
+    "CryptoAirdrops",      # 空投线报
+    "Ucard_news",          # U卡与虚拟卡资讯
+    "DealHunt",            # 全球数码与软件折扣
+    "bank_accounts_deals", # 海外银行与开户奖励
+    "freebies_tg",         # 全球免费资源线报
+    "crypto_airdrops_free",# 零撸空投
+    "vps_chat",            # VPS 交流与特价通知
+    "free_vps",            # 免费云服务器
+    "airdrop_alert",       # 空投提醒
+    "virtual_cards",       # 虚拟卡与U卡福利
+    "tech_deals",          # 科技数码折扣
+    "giveaways_hub"        # 全球福利抽奖与羊毛
 ]
 
 ACTIVE_FILE = "data/active_deals.json"
 ARCHIVE_FILE = "data/archived_deals.json"
 
+# 🛡️ 智能清洗环境变量
 raw_api_key = os.environ.get("LLM_API_KEY", "").strip()
 for sep in [' ', '\n', '\r', '\t', 'LLM_']:
     if sep in raw_api_key:
@@ -81,7 +97,7 @@ if not MODEL:
 
 client_base_url = BASE_URL
 
-# 💡 优化后的宽松提示词：积极识别各类 VPS、空投、羊毛与优惠
+# 💡 宽松高效的 AI 判定提示词
 SYSTEM_PROMPT = """
 你是一个精通全球“撸羊毛”、免费资源、限时活动、VPS促销、软件折扣与空投的情报分析专家。
 请从给定的文章标题、摘要或社交媒体正文中提取任何有价值的优惠、促销、空投或免费资源信息。
@@ -173,7 +189,8 @@ def fetch_telegram_channel_entries(channel_username):
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             messages = soup.find_all('div', class_='tgme_widget_message')
-            for msg in messages[-15:]:
+            # 💡 深度扩大到最近 25 条消息
+            for msg in messages[-25:]:
                 text_div = msg.find('div', class_='tgme_widget_message_text')
                 if not text_div:
                     continue
@@ -203,12 +220,12 @@ def main():
     existing_ids = {d["id"] for d in active_deals} | {d["id"] for d in archived_deals}
     new_added_count = 0
 
-    # 1. 采集 RSS 源
+    # 1. 采集 RSS 源 (💡 深度扩大到每源前 20 条)
     for src in RSS_SOURCES:
         try:
             print(f"正在检查 RSS 源: {src['name']} ...")
             feed = feedparser.parse(src["url"])
-            for entry in feed.entries[:5]:
+            for entry in feed.entries[:20]:
                 title = clean_text(entry.get("title", ""))
                 link = clean_text(entry.get("link", ""))
                 summary = clean_text(entry.get("summary", entry.get("description", "")))
@@ -232,7 +249,7 @@ def main():
                     existing_ids.add(deal_id)
                     new_added_count += 1
                     print(f"  -> 🎉 成功捕获新羊毛: {parsed.get('title')}")
-                time.sleep(0.5)
+                time.sleep(0.3)
         except Exception as e:
             print(f"解析源 {src['name']} 失败: {str(e)[:100]}")
 
@@ -241,7 +258,7 @@ def main():
         try:
             print(f"正在检查 Telegram 频道: @{ch} ...")
             tg_entries = fetch_telegram_channel_entries(ch)
-            for entry in tg_entries[:5]:
+            for entry in tg_entries:
                 title = entry["title"]
                 link = entry["link"]
                 summary = entry["summary"]
@@ -266,7 +283,7 @@ def main():
                     existing_ids.add(deal_id)
                     new_added_count += 1
                     print(f"  -> 🎉 成功从 Telegram 捕获羊毛: {parsed.get('title')}")
-                time.sleep(0.5)
+                time.sleep(0.3)
         except Exception as e:
             print(f"抓取 Telegram 频道 @{ch} 失败: {str(e)[:100]}")
 
